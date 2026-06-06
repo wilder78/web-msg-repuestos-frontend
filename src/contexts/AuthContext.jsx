@@ -7,7 +7,15 @@ const readStoredUser = () => {
   try {
     const raw =
       localStorage.getItem("user") || sessionStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    if (user) {
+      const rawActive = user.is_active ?? user.isActive ?? user.is_Active;
+      const isAct = rawActive === true || rawActive === 1 || rawActive === "1" || rawActive === "true";
+      user.is_active = isAct;
+      user.isActive = isAct;
+    }
+    return user;
   } catch {
     return null;
   }
@@ -17,102 +25,123 @@ const PERMS_CACHE_KEY = "user_permissions";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readStoredUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!readStoredUser());
   const [permisos, setPermisos] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  const tokenExistente = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const [loading, setLoading] = useState(!!tokenExistente);
 
   useEffect(() => {
-    const inicializarSeguridadEscalable = async () => {
+    const verificarUsuarioYSeguridad = async () => {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const storedUserRaw = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+      if (!token || !storedUserRaw) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem(PERMS_CACHE_KEY);
+        setUser(null);
+        setIsAuthenticated(false);
+        setPermisos([]);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const storedUserRaw = sessionStorage.getItem('user') || localStorage.getItem('user');
-        
-        if (!storedUserRaw) {
+        // 1. Verificar el token con el endpoint de perfil
+        await api.get("/users/profile");
+        setIsAuthenticated(true);
+
+        // 2. Cargar permisos y normalizar el usuario
+        const parsedUser = JSON.parse(storedUserRaw);
+        if (parsedUser) {
+          const rawActive = parsedUser.is_active ?? parsedUser.isActive ?? parsedUser.is_Active;
+          const isAct = rawActive === true || rawActive === 1 || rawActive === "1" || rawActive === "true";
+          parsedUser.is_active = isAct;
+          parsedUser.isActive = isAct;
+          setUser(parsedUser);
+        }
+
+        const roleId = Number(parsedUser?.idRol ?? parsedUser?.id_rol ?? parsedUser?.idrol);
+
+        // CASO A: Es un cliente (Rol 4 o 7) -> No tiene acceso al Dashboard
+        if (roleId === 4 || roleId === 7) {
           setPermisos([]);
           setLoading(false);
           return;
         }
 
-        const user = JSON.parse(storedUserRaw);
-        const roleId = Number(user?.idRol ?? user?.id_rol ?? user?.idrol);
-
-        // CASO A: Es un cliente (Rol 4) -> No tiene acceso al Dashboard
-        if (roleId === 4) {
-          console.warn("Acceso denegado: El rol 4 (Cliente) no tiene permitido el Dashboard.");
-          setPermisos([]);
-          setLoading(false);
-          return; 
-        }
-
         // CASO B: Es personal de Alta Gestión (Master) -> Acceso con Super-Permiso
         if (roleId === 1) {
-          console.log("Bypass Activado: Rol Master detectado.");
           setPermisos(['*']);
           setLoading(false);
           return;
         }
 
         // CASO C: CUALQUIER OTRO ROL PRESENTE O FUTURO
-        console.log(`Cargando permisos granulares para el Rol número: ${roleId}`);
-        
         const cachedPerms = sessionStorage.getItem(PERMS_CACHE_KEY);
         if (cachedPerms) {
           const parsedCache = JSON.parse(cachedPerms);
           setPermisos(Array.isArray(parsedCache) ? parsedCache : []);
+          setLoading(false);
           return;
         }
 
-        try {
-          const rolePermsRes = await api.get("/role-permissions/");
-          const rolePerms = Array.isArray(rolePermsRes.data)
-            ? rolePermsRes.data
-            : rolePermsRes.data?.data ?? [];
+        const rolePermsRes = await api.get("/role-permissions/");
+        const rolePerms = Array.isArray(rolePermsRes.data)
+          ? rolePermsRes.data
+          : rolePermsRes.data?.data ?? [];
 
-          // Filtrar sólo los que pertenecen a este rol
-          const myPerms = rolePerms.filter(
-            (rp) => Number(rp.idRol ?? rp.id_rol) === roleId
+        const myPerms = rolePerms.filter(
+          (rp) => Number(rp.idRol ?? rp.id_rol) === roleId
+        );
+
+        let names = myPerms
+          .map((rp) => rp.permiso?.nombrePermiso ?? rp.nombrePermiso ?? null)
+          .filter(Boolean);
+
+        if (names.length === 0 && myPerms.length > 0) {
+          const allPermsRes = await api.get("/permissions");
+          const allPerms = Array.isArray(allPermsRes.data)
+            ? allPermsRes.data
+            : allPermsRes.data?.data ?? [];
+          const allowedIds = myPerms.map(
+            (rp) => Number(rp.idPermiso ?? rp.id_permiso ?? rp.id)
           );
-
-          // Extraer el nombre directo del JOIN embebido (campo permiso.nombrePermiso)
-          // que ya viene en la respuesta de /role-permissions/
-          let names = myPerms
-            .map((rp) => rp.permiso?.nombrePermiso ?? rp.nombrePermiso ?? null)
+          names = allPerms
+            .filter((p) =>
+              allowedIds.includes(Number(p.idPermiso ?? p.id_permiso ?? p.id))
+            )
+            .map((p) => p.nombrePermiso)
             .filter(Boolean);
-
-          // Fallback: si no venían embebidos, cruzar con /permissions manualmente
-          if (names.length === 0 && myPerms.length > 0) {
-            const allPermsRes = await api.get("/permissions");
-            const allPerms = Array.isArray(allPermsRes.data)
-              ? allPermsRes.data
-              : allPermsRes.data?.data ?? [];
-            const allowedIds = myPerms.map(
-              (rp) => Number(rp.idPermiso ?? rp.id_permiso ?? rp.id)
-            );
-            names = allPerms
-              .filter((p) =>
-                allowedIds.includes(Number(p.idPermiso ?? p.id_permiso ?? p.id))
-              )
-              .map((p) => p.nombrePermiso)
-              .filter(Boolean);
-          }
-
-          setPermisos(names);
-          sessionStorage.setItem(PERMS_CACHE_KEY, JSON.stringify(names));
-        } catch {
-          setPermisos([]);
-          sessionStorage.removeItem(PERMS_CACHE_KEY);
         }
+
+        setPermisos(names);
+        sessionStorage.setItem(PERMS_CACHE_KEY, JSON.stringify(names));
       } catch (error) {
-        console.error("Error crítico en el árbol de seguridad:", error);
+        console.error("Token inválido o expirado durante la inicialización:", error);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem(PERMS_CACHE_KEY);
+        setUser(null);
+        setIsAuthenticated(false);
         setPermisos([]);
       } finally {
-        setLoading(false); // Apaga el loading SIEMPRE, evitando pantallas en blanco
+        setLoading(false);
       }
     };
 
-    inicializarSeguridadEscalable();
-  }, [user]);
+    verificarUsuarioYSeguridad();
+  }, [user?.idUsuario]);
 
   const syncFromStorage = useCallback(() => {
-    setUser(readStoredUser());
+    const nextUser = readStoredUser();
+    setUser(nextUser);
+    setIsAuthenticated(!!nextUser);
   }, []);
 
   useEffect(() => {
@@ -162,13 +191,7 @@ export function AuthProvider({ children }) {
     window.dispatchEvent(new Event("auth-changed"));
   }, []);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <span>Cargando configuraciones de seguridad...</span>
-      </div>
-    );
-  }
+
 
   return (
     <AuthContext.Provider

@@ -7,72 +7,42 @@ import CardCarousel from "./CardCarousel";
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
-export default function BestSellersCarousel() {
+export default function BestSellersCarousel({ products = [] }) {
   const { addToCart } = useCart();
   const { user } = useAuth();
-  
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch and decorate top 6 products
-  useEffect(() => {
-    const fetchBestSellers = () => {
-      fetch(`${API_BASE_URL}/products`)
-        .then((r) => r.json())
-        .then((data) => {
-          const list = Array.isArray(data) ? data : data.data || data.content || [];
-          // Filter only category "Repuestos"
-          const filtered = list.filter((p) => {
-            const catName = (
-              p.categoria?.nombreCategoria ||
-              p.categoria?.nombre_categoria ||
-              p.categoria?.nombre ||
-              ""
-            ).toLowerCase();
-            return catName === "repuestos" || catName === "repuesto";
-          });
-          // Sort by ID descending as a heuristic for popularity, then slice top 6
-          const sorted = [...filtered].sort(
-            (a, b) => (b.id_producto || 0) - (a.id_producto || 0)
-          );
-          const top6 = sorted.slice(0, 6);
+  // Decorate products
+  const decorated = React.useMemo(() => {
+    const sorted = [...products].sort(
+      (a, b) => (b.id_producto || 0) - (a.id_producto || 0)
+    );
+    const top6 = sorted.slice(0, 6);
 
-          // Decorate with compatibility, rating, mock sales, and warranty
-          const decorated = top6.map((product, idx) => {
-            const compatibilities = [
-              "Honda Wave, Yamaha Crypton, Suzuki AX100",
-              "Bajaj Pulsar 200, TVS Apache, Honda CB190R",
-              "Universal para motos lineales 125cc - 250cc",
-              "Yamaha FZ25, Honda Twister, Suzuki Gixxer 250",
-              "Honda XR150, Yamaha XTZ150, Bajaj Boxer",
-              "Kawasaki Ninja 300, Yamaha R3, KTM Duke 390",
-            ];
-            const ratings = [4.9, 4.8, 4.9, 4.7, 4.8, 4.9];
-            const sales = [140, 95, 210, 80, 115, 65];
-            const stockVal = product.stock_buen_estado ?? product.stockBuenEstado ?? 10;
+    return top6.map((product, idx) => {
+      const compatibilities = [
+        "Honda Wave, Yamaha Crypton, Suzuki AX100",
+        "Bajaj Pulsar 200, TVS Apache, Honda CB190R",
+        "Universal para motos lineales 125cc - 250cc",
+        "Yamaha FZ25, Honda Twister, Suzuki Gixxer 250",
+        "Honda XR150, Yamaha XTZ150, Bajaj Boxer",
+        "Kawasaki Ninja 300, Yamaha R3, KTM Duke 390",
+      ];
+      const ratings = [4.9, 4.8, 4.9, 4.7, 4.8, 4.9];
+      const sales = [140, 95, 210, 80, 115, 65];
+      const stockVal = product.stock_buen_estado ?? product.stockBuenEstado ?? 10;
 
-            return {
-              ...product,
-              rating: ratings[idx % ratings.length],
-              ventas: sales[idx % sales.length],
-              compatibilidad: compatibilities[idx % compatibilities.length],
-              garantia: "Garantía de fábrica 6 meses",
-              stock: stockVal,
-            };
-          });
+      return {
+        ...product,
+        rating: ratings[idx % ratings.length],
+        ventas: sales[idx % sales.length],
+        compatibilidad: compatibilities[idx % compatibilities.length],
+        garantia: "Garantía de fábrica 6 meses",
+        stock: stockVal,
+      };
+    });
+  }, [products]);
 
-          setProducts(decorated);
-        })
-        .catch((err) => console.error("Error fetching best sellers:", err))
-        .finally(() => setLoading(false));
-    };
-
-    fetchBestSellers();
-    const interval = setInterval(fetchBestSellers, 20000); // Poll every 20s
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) {
+  if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-slate-400">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -80,8 +50,6 @@ export default function BestSellersCarousel() {
       </div>
     );
   }
-
-  if (products.length === 0) return null;
 
   const formatter = new Intl.NumberFormat("es-PE", {
     minimumFractionDigits: 2,
@@ -113,7 +81,7 @@ export default function BestSellersCarousel() {
 
       {/* Carrusel reutilizando CardCarousel */}
       <CardCarousel
-        items={products}
+        items={decorated}
         desktopViews={4}
         tabletViews={2.5}
         mobileViews={1.25}

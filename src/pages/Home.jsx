@@ -57,7 +57,7 @@ const ProductCard = ({ product, showNew = false }) => {
 
   return (
     <div className="group relative bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:-translate-y-[5px] hover:border-orange-200/50 hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-300 ease-in-out flex flex-col h-full">
-      {showNew && (
+      {(product.esNuevo || product.es_nuevo) && (
         <span className="absolute top-3 left-3 z-10 rounded-lg bg-gradient-to-r from-orange-600 via-red-500 to-amber-500 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-orange-500/20 animate-pulse">
           Nuevo
         </span>
@@ -95,14 +95,16 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "")
 
 const Home = () => {
   const [dbProducts, setDbProducts] = useState([]);
+  const [topRepuestos, setTopRepuestos] = useState([]);
+  const [topAccesorios, setTopAccesorios] = useState([]);
   const [loadingDb, setLoadingDb] = useState(true);
 
   useEffect(() => {
     const fetchProducts = () => {
-      fetch(`${API_BASE_URL}/products`)
+      fetch(`${API_BASE_URL}/products/latest`)
         .then((r) => r.json())
         .then((data) => {
-          const list = Array.isArray(data) ? data : data.data || data.content || [];
+          const list = Array.isArray(data) ? data : data.products || data.data || data.content || [];
           const sorted = [...list].sort(
             (a, b) => (b.id_producto || 0) - (a.id_producto || 0),
           );
@@ -112,8 +114,35 @@ const Home = () => {
         .finally(() => setLoadingDb(false));
     };
 
+    const fetchTopRepuestos = () => {
+      fetch(`${API_BASE_URL}/products/home/top-repuestos`)
+        .then((r) => r.json())
+        .then((data) => {
+          const list = Array.isArray(data) ? data : data.products || data.data || data.content || [];
+          setTopRepuestos(list);
+        })
+        .catch((err) => console.error("Error cargando repuestos del Home", err));
+    };
+
+    const fetchTopAccesorios = () => {
+      fetch(`${API_BASE_URL}/products/home/top-accesorios`)
+        .then((r) => r.json())
+        .then((data) => {
+          const list = Array.isArray(data) ? data : data.products || data.data || data.content || [];
+          setTopAccesorios(list);
+        })
+        .catch((err) => console.error("Error cargando accesorios del Home", err));
+    };
+
     fetchProducts();
-    const interval = setInterval(fetchProducts, 20000); // Poll every 20s
+    fetchTopRepuestos();
+    fetchTopAccesorios();
+    
+    const interval = setInterval(() => {
+      fetchProducts();
+      fetchTopRepuestos();
+      fetchTopAccesorios();
+    }, 20000); // Poll every 20s
     return () => clearInterval(interval);
   }, []);
 
@@ -165,10 +194,10 @@ const Home = () => {
         </section>
 
         {/* Repuestos Más Vendidos */}
-        <BestSellersCarousel />
+        <BestSellersCarousel products={topRepuestos} />
 
         {/* Accesorios de Lujo Más Vendidos */}
-        <LuxuryAccessoriesCarousel />
+        <LuxuryAccessoriesCarousel products={topAccesorios} />
 
         {/* Carrusel de Marcas */}
         <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">

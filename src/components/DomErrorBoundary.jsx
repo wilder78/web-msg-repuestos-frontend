@@ -17,10 +17,8 @@ class DomErrorBoundary extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
-    // Sólo interceptamos errores de reconciliación del DOM
+    // Sólo interceptamos errores de reconciliación reales del DOM
     const isDomError =
-      error instanceof TypeError ||
-      error instanceof DOMException ||
       error?.name === "NotFoundError" ||
       error?.message?.includes("removeChild") ||
       error?.message?.includes("insertBefore") ||
@@ -36,8 +34,6 @@ class DomErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     const isDomError =
-      error instanceof TypeError ||
-      error instanceof DOMException ||
       error?.name === "NotFoundError" ||
       error?.message?.includes("removeChild") ||
       error?.message?.includes("insertBefore") ||

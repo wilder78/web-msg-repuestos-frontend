@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Forbidden403 from "./pages/Forbidden403";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { PermissionRoute } from "./components/PermissionRoute";
 import DashboardLayout from "./pages/Dashboard/DashboardLayout";
 import DashboardContent from "./pages/Dashboard/DashboardContent";
@@ -36,6 +37,7 @@ export default function App() {
       <Route path="/mi-historial" element={<OrderHistoryPage />} />
       <Route path="/login" element={<Navigate to="/?login=true" replace />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/403" element={<Forbidden403 />} />
 
       {/* ─── Rutas del Dashboard ─────────────────────────────────────── */}

@@ -43,7 +43,7 @@ const useProducts = () => {
     setError(null);
     try {
       const [resProducts, resCategories] = await Promise.all([
-        authFetch("/api/products"),
+        authFetch("/api/products/all-list"),
         authFetch("/api/categories"),
       ]);
 
