@@ -338,7 +338,7 @@ const WindowContent = ({ win, onClose }) => {
     ? {
         nombreRuta: win.data.nombreRuta || "",
         idZona: win.data.idZona?.toString() || "",
-        idEmpleado: win.data.idEmpleado?.toString() || "",
+        idEmpleado: (win.data.idEmpleado ?? win.data.id_empleado ?? win.data.empleado?.idEmpleado ?? win.data.empleado?.id_empleado)?.toString() || "",
         fechaPlanificada: win.data.fechaPlanificada 
           ? (() => {
               try {
@@ -576,11 +576,11 @@ const WindowContent = ({ win, onClose }) => {
           .filter((emp) => {
             const roleId =
               emp.usuario?.idRol ||
-              emp.usuario?.id_rol ||
+              emp.usuario?.id_role ||
               emp.usuario?.rol?.idRol ||
               emp.idRol ||
-              emp.id_rol;
-            return Number(roleId) === 3 || Number(roleId) === 2 || !roleId;
+              emp.id_role;
+            return Number(roleId) === 3;
           })
           .map((emp) => ({
             ...emp,

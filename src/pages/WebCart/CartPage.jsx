@@ -7,6 +7,7 @@ import Navbar from "../../components/Navbar/PublicNavbar";
 import Footer from "../../components/Footer/Footer";
 import WhatsAppButton from "../../components/shared/WhatsAppButton";
 import { authFetch } from "../../lib/auth-utils";
+import SuccessToast from "../../components/ui/SuccessToast";
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
@@ -103,6 +104,11 @@ const getStoredUserEmail = () => {
     user?.user?.email ||
     ""
   ).trim();
+};
+
+const getStoredUserClientId = () => {
+  const user = getStoredUser();
+  return user?.idCliente || user?.id_cliente || user?.idcliente || null;
 };
 
 const hasSession = () =>
@@ -290,12 +296,13 @@ const CustomerRegistrationModal = ({
   onChange,
   onClose,
   onSubmit,
+  onDocumentBlur,
 }) => {
   if (!isOpen) return null;
 
   const documentErrorId = "customer-document-error";
   const documentNumberHasError = Boolean(documentValidation.error);
-  const isSubmitDisabled = loading || documentValidation.loading || documentValidation.exists;
+  const isSubmitDisabled = loading || documentValidation.loading;
 
   const updateField = (field, value) => {
     onChange({
@@ -341,6 +348,7 @@ const CustomerRegistrationModal = ({
             <input
               value={formData.numero_documento}
               onChange={(event) => updateField("numero_documento", event.target.value)}
+              onBlur={onDocumentBlur}
               required
               aria-invalid={documentNumberHasError}
               aria-describedby={documentNumberHasError ? documentErrorId : undefined}
@@ -613,6 +621,7 @@ export default function CartPage() {
   const [checkoutError, setCheckoutError] = useState("");
   const [checkoutSuccess, setCheckoutSuccess] = useState("");
   const [createdOrder, setCreatedOrder] = useState(null);
+  const [confirmedOrderDetails, setConfirmedOrderDetails] = useState({ id: "", total: 0 });
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [customerForm, setCustomerForm] = useState(EMPTY_CUSTOMER_FORM);
   const [customerFormError, setCustomerFormError] = useState("");
@@ -624,6 +633,15 @@ export default function CartPage() {
     error: "",
     key: "",
   });
+  const [successToastConfig, setSuccessToastConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+  });
+
+  const showSuccessToast = (title, message) => {
+    setSuccessToastConfig({ visible: true, title, message });
+  };
   const [departments, setDepartments] = useState([]);
   const [municipalities, setMunicipalities] = useState([]);
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false);
@@ -753,6 +771,19 @@ export default function CartPage() {
     };
   }, [sellerCustomerModalOpen]);
 
+  const findCustomerById = async (id) => {
+    try {
+      const response = await authFetch(`${API_BASE_URL}/customers/${id}`);
+      if (response.ok) {
+        const payload = await response.json();
+        return unwrapEntity(payload);
+      }
+    } catch (error) {
+      console.error("Error fetching customer by ID:", error);
+    }
+    return null;
+  };
+
   const findCustomerByEmail = async (email) => {
     const encodedEmail = encodeURIComponent(email);
     const urls = [
@@ -833,60 +864,69 @@ export default function CartPage() {
     return null;
   };
 
-  useEffect(() => {
+  const handleDocumentBlur = async () => {
     const documentTypeId = customerForm.id_tipo_documento;
     const documentNumber = customerForm.numero_documento.trim();
     const validationKey = `${documentTypeId}:${documentNumber}`;
 
-    if (!customerModalOpen || !documentTypeId || !documentNumber) {
-      setDocumentValidation({
-        loading: false,
-        exists: false,
-        error: "",
-        key: "",
-      });
-      return;
-    }
+    if (!documentTypeId || !documentNumber) return;
 
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(async () => {
-      setDocumentValidation({
-        loading: true,
-        exists: false,
-        error: "",
-        key: validationKey,
-      });
+    setDocumentValidation({
+      loading: true,
+      exists: false,
+      error: "",
+      key: validationKey,
+      customerData: null,
+    });
 
-      try {
-        const existingCustomer = await findCustomerByDocument(documentTypeId, documentNumber, {
-          signal: controller.signal,
-        });
-        if (controller.signal.aborted) return;
+    try {
+      const existingCustomer = await findCustomerByDocument(documentTypeId, documentNumber);
+      
+      if (existingCustomer) {
+        const municipioObj = existingCustomer.municipio;
+        const deptId = existingCustomer.idDepartamento ?? existingCustomer.id_departamento ?? municipioObj?.departamento?.id ?? municipioObj?.departmentId;
+        const muniId = existingCustomer.idMunicipio ?? existingCustomer.id_municipio ?? existingCustomer.municipioId ?? existingCustomer.municipio_id ?? municipioObj?.id;
+
+        setCustomerForm((prev) => ({
+          ...prev,
+          razon_social: existingCustomer.razonSocial || existingCustomer.razon_social || "",
+          direccion: existingCustomer.direccion || "",
+          telefono: existingCustomer.telefono || "",
+          id_departamento: deptId?.toString() || "",
+          municipio_id: muniId?.toString() || "",
+        }));
 
         setDocumentValidation({
           loading: false,
-          exists: Boolean(existingCustomer),
-          error: existingCustomer
-            ? "Este tipo y numero de documento ya pertenecen a un cliente registrado en MSG Repuestos."
-            : "",
+          exists: true,
+          error: "",
           key: validationKey,
+          customerData: existingCustomer,
         });
-      } catch (error) {
-        if (error.name === "AbortError") return;
+
+        showSuccessToast(
+          "¡Cliente encontrado!",
+          "Los datos de facturación se han autocompletado correctamente."
+        );
+      } else {
         setDocumentValidation({
           loading: false,
           exists: false,
-          error: "No fue posible validar el documento. Intenta nuevamente.",
+          error: "",
           key: validationKey,
+          customerData: null,
         });
       }
-    }, 450);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeoutId);
-    };
-  }, [customerModalOpen, customerForm.id_tipo_documento, customerForm.numero_documento]);
+    } catch (error) {
+      setDocumentValidation({
+        loading: false,
+        exists: false,
+        error: "No fue posible validar el documento. Intenta nuevamente.",
+        key: validationKey,
+        customerData: null,
+      });
+    }
+  };
 
   const buildOrderPayload = (customer, options = {}) => {
     const idCliente = getCustomerId(customer);
@@ -991,23 +1031,34 @@ export default function CartPage() {
     }
 
     const email = getStoredUserEmail();
-    if (!email) {
-      setCheckoutError("No encontramos el email del usuario autenticado. Actualiza tu perfil o inicia sesion nuevamente.");
+    const storedCustomerId = getStoredUserClientId();
+    if (!email && !storedCustomerId) {
+      setCheckoutError("No encontramos el email o identificador del usuario autenticado. Actualiza tu perfil o inicia sesion nuevamente.");
       return;
     }
 
     setCheckoutLoading(true);
     try {
-      const existingCustomer = await findCustomerByEmail(email);
+      let existingCustomer = null;
+      if (storedCustomerId) {
+        existingCustomer = await findCustomerById(storedCustomerId);
+      }
+      if (!existingCustomer && email) {
+        existingCustomer = await findCustomerByEmail(email);
+      }
+
       if (!existingCustomer) {
-        openCustomerForm(email);
+        openCustomerForm(email || "");
         return;
       }
 
       const order = await processOrder(existingCustomer);
+      const orderId = order?.id_pedido ?? order?.idPedido ?? order?.id ?? order?.data?.id_pedido ?? order?.data?.idPedido ?? order?.data?.id ?? "N/A";
+      const orderTotal = Number(order?.total_neto ?? order?.totalNeto ?? order?.total ?? order?.data?.total_neto ?? order?.data?.totalNeto ?? order?.data?.total ?? totalGeneral);
+      setConfirmedOrderDetails({ id: orderId, total: orderTotal });
       setCreatedOrder(order);
       clearCart();
-      setCheckoutSuccess(`Pedido ${order?.idPedido || order?.id_pedido || order?.id || ""} registrado correctamente.`);
+      setCheckoutSuccess(`Pedido ${orderId} registrado correctamente.`);
     } catch (error) {
       setCheckoutError(error.message || "No se pudo confirmar el pedido.");
     } finally {
@@ -1042,10 +1093,13 @@ export default function CartPage() {
     try {
       const order = await processOrder(selectedCustomer, { sellerId: currentUserId });
       setSellerCustomerModalOpen(false);
+      const orderId = order?.id_pedido ?? order?.idPedido ?? order?.id ?? order?.data?.id_pedido ?? order?.data?.idPedido ?? order?.data?.id ?? "N/A";
+      const orderTotal = Number(order?.total_neto ?? order?.totalNeto ?? order?.total ?? order?.data?.total_neto ?? order?.data?.totalNeto ?? order?.data?.total ?? totalGeneral);
+      setConfirmedOrderDetails({ id: orderId, total: orderTotal });
       setCreatedOrder(order);
       clearCart();
       setCheckoutSuccess(
-        `Pedido ${order?.idPedido || order?.id_pedido || order?.id || ""} registrado correctamente para ${getCustomerName(selectedCustomer)}.`
+        `Pedido ${orderId} registrado correctamente para ${getCustomerName(selectedCustomer)}.`
       );
     } catch (error) {
       const message = error.message || "No se pudo confirmar el pedido para el cliente seleccionado.";
@@ -1073,15 +1127,8 @@ export default function CartPage() {
       return;
     }
 
-    const documentKey = `${customerForm.id_tipo_documento}:${customerForm.numero_documento.trim()}`;
     if (documentValidation.loading) {
       const message = "Espera un momento mientras validamos el documento.";
-      setCustomerFormError(message);
-      return;
-    }
-
-    if (documentValidation.exists && documentValidation.key === documentKey) {
-      const message = "No puedes guardar este cliente porque el documento ya esta registrado en MSG Repuestos.";
       setCustomerFormError(message);
       return;
     }
@@ -1090,20 +1137,10 @@ export default function CartPage() {
     setCustomerFormError("");
     setCheckoutError("");
     try {
-      const existingCustomer = await findCustomerByDocument(
+      const existingCustomer = documentValidation.customerData || await findCustomerByDocument(
         customerForm.id_tipo_documento,
         customerForm.numero_documento
       );
-      if (existingCustomer) {
-        setDocumentValidation({
-          loading: false,
-          exists: true,
-          error: "Este tipo y numero de documento ya pertenecen a un cliente registrado en MSG Repuestos.",
-          key: documentKey,
-        });
-        const message = "No puedes guardar este cliente porque el documento ya esta registrado en MSG Repuestos.";
-        throw new Error(message);
-      }
 
       const customerPayload = {
         id_tipo_documento: parseInt(customerForm.id_tipo_documento, 10),
@@ -1120,29 +1157,72 @@ export default function CartPage() {
         municipio_id: parseInt(customerForm.municipio_id, 10),
         id_municipio: parseInt(customerForm.municipio_id, 10),
         idMunicipio: parseInt(customerForm.municipio_id, 10),
-        tipoCliente: "Consumidor Final",
-        tipo_cliente: "Consumidor Final",
-        cupoCredito: 0,
-        cupo_credito: 0,
-        idEstado: 1,
-        id_estado: 1,
+        tipoCliente: existingCustomer?.tipoCliente || "Consumidor Final",
+        tipo_cliente: existingCustomer?.tipo_cliente || "Consumidor Final",
+        cupoCredito: existingCustomer?.cupoCredito ?? 0,
+        cupo_credito: existingCustomer?.cupo_credito ?? 0,
+        idEstado: existingCustomer?.idEstado ?? 1,
+        id_estado: existingCustomer?.id_estado ?? 1,
       };
 
-      const response = await authFetch(`${API_BASE_URL}/customers`, {
-        method: "POST",
-        body: JSON.stringify(customerPayload),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload.message || payload.error || "No se pudo registrar el cliente.");
+      let savedCustomer;
+      if (existingCustomer) {
+        const idCliente = getCustomerId(existingCustomer);
+        const response = await authFetch(`${API_BASE_URL}/customers/${idCliente}`, {
+          method: "PUT",
+          body: JSON.stringify(customerPayload),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.message || payload.error || "No se pudo actualizar los datos del cliente.");
+        }
+        showSuccessToast(
+          "¡Tus datos de facturación han sido actualizados de forma segura!",
+          "Procesando tu pedido..."
+        );
+        savedCustomer = unwrapEntity(payload) || existingCustomer;
+      } else {
+        const response = await authFetch(`${API_BASE_URL}/customers`, {
+          method: "POST",
+          body: JSON.stringify(customerPayload),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.message || payload.error || "No se pudo registrar el cliente.");
+        }
+        savedCustomer = unwrapEntity(payload);
       }
 
-      const savedCustomer = unwrapEntity(payload);
+      // Update stored user idCliente if needed
+      const savedCustomerId = getCustomerId(savedCustomer);
+      if (savedCustomerId) {
+        const storedUser = getStoredUser();
+        if (storedUser && !storedUser.idCliente) {
+          storedUser.idCliente = savedCustomerId;
+          const key = localStorage.getItem("user") ? "user" : (sessionStorage.getItem("user") ? "user" : null);
+          if (key) {
+            (key === "user" ? localStorage : sessionStorage).setItem(
+              "user",
+              JSON.stringify(storedUser)
+            );
+            window.dispatchEvent(new Event("storage"));
+            window.dispatchEvent(new Event("auth-changed"));
+          }
+        }
+      }
+
       const order = await processOrder(savedCustomer);
       setCustomerModalOpen(false);
+      const orderId = order?.id_pedido ?? order?.idPedido ?? order?.id ?? order?.data?.id_pedido ?? order?.data?.idPedido ?? order?.data?.id ?? "N/A";
+      const orderTotal = Number(order?.total_neto ?? order?.totalNeto ?? order?.total ?? order?.data?.total_neto ?? order?.data?.totalNeto ?? order?.data?.total ?? totalGeneral);
+      setConfirmedOrderDetails({ id: orderId, total: orderTotal });
       setCreatedOrder(order);
       clearCart();
-      setCheckoutSuccess(`Cliente registrado y pedido ${order?.idPedido || order?.id_pedido || order?.id || ""} creado correctamente.`);
+      setCheckoutSuccess(
+        existingCustomer
+          ? `Pedido ${orderId} creado correctamente.`
+          : `Cliente registrado y pedido ${orderId} creado correctamente.`
+      );
     } catch (error) {
       setCustomerFormError(error.message || "No se pudo completar el registro del cliente.");
     } finally {
@@ -1153,6 +1233,12 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
+      <SuccessToast
+        visible={successToastConfig.visible}
+        title={successToastConfig.title}
+        message={successToastConfig.message}
+        onClose={() => setSuccessToastConfig((prev) => ({ ...prev, visible: false }))}
+      />
 
       <div className="flex-1">
         <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -1270,6 +1356,7 @@ export default function CartPage() {
           if (!checkoutLoading) setCustomerModalOpen(false);
         }}
         onSubmit={handleCustomerSubmit}
+        onDocumentBlur={handleDocumentBlur}
       />
 
       <SellerCustomerSelectModal
@@ -1327,13 +1414,13 @@ export default function CartPage() {
               <div className="flex justify-between text-xs text-slate-500">
                 <span>Número de Orden</span>
                 <span className="font-bold text-slate-800">
-                  #{createdOrder?.idPedido || createdOrder?.id_pedido || createdOrder?.id || "N/A"}
+                  #{confirmedOrderDetails?.id || "N/A"}
                 </span>
               </div>
               <div className="flex justify-between text-xs text-slate-500">
                 <span>Total de Compra</span>
                 <span className="font-extrabold text-blue-600">
-                  S/ {(createdOrder?.total_neto ?? createdOrder?.totalNeto ?? totalGeneral).toFixed(2)}
+                  S/ {(confirmedOrderDetails?.total ?? 0).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between text-[11px] text-slate-400 italic">

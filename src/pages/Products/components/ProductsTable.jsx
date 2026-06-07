@@ -102,7 +102,7 @@ const ProductsTable = ({
                 <TableCell>
                   <div className="flex items-center gap-1.5">
                     <Tag className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-zinc-700">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-zinc-700">
                       {p.categoria?.nombre_categoria ||
                         categoryMap[p.idCategoria || p.id_categoria] ||
                         "Sin categoría"}
@@ -110,7 +110,7 @@ const ProductsTable = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1 text-sm font-semibold text-slate-600 dark:text-slate-350">
+                  <div className="flex items-center gap-1 text-sm font-semibold text-slate-600 dark:text-slate-200">
                     <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
                     {parseFloat(precio).toLocaleString("es-CO", {
                       minimumFractionDigits: 2,
@@ -123,7 +123,7 @@ const ProductsTable = ({
                       className={`h-3.5 w-3.5 ${stock <= 5 ? "text-rose-500" : "text-slate-400 dark:text-zinc-500"}`}
                     />
                     <span
-                      className={`font-medium ${stock <= 5 ? "text-rose-600 dark:text-rose-450" : "text-slate-600 dark:text-slate-350"}`}
+                      className={`font-medium ${stock <= 5 ? "text-rose-600 dark:text-rose-400" : "text-slate-600 dark:text-slate-200"}`}
                     >
                       {stock} uds
                     </span>

@@ -22,6 +22,12 @@ export function RouteForm({
 }) {
   const [selectedCliente, setSelectedCliente] = useState("");
 
+  const vendedoresDisponibles = (listaEmpleados || []).filter((e) => {
+    const roleId = Number(e.idRol ?? e.id_role ?? e.usuario?.idRol ?? e.usuario?.id_role ?? 0);
+    const isCurrent = formData.idEmpleado && String(e.idEmpleado) === String(formData.idEmpleado);
+    return roleId === 3 || isCurrent;
+  });
+
   useEffect(() => {
     if (!onValidityChange) return;
 
@@ -118,29 +124,35 @@ export function RouteForm({
 
         <div className="flex flex-col gap-1.5 md:col-span-2">
           <Label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
-            <User className="h-4 w-4 text-amber-500" /> Transportista Asignado (Opcional)
+            <User className="h-4 w-4 text-amber-500" /> Vendedor Asignado (Opcional)
           </Label>
           <Select
             value={formData.idEmpleado?.toString() || ""}
             onValueChange={(val) => onSelectChange("idEmpleado", val)}
+            disabled={vendedoresDisponibles.length === 0}
           >
             <SelectTrigger className="rounded-xl border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-white focus-visible:ring-amber-500">
-              <SelectValue placeholder="Seleccionar empleado" />
+              <SelectValue placeholder={vendedoresDisponibles.length === 0 ? "No hay vendedores" : "Seleccionar vendedor"} />
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
-              {listaEmpleados
-                .filter((e) => {
-                  const roleId = Number(e.idRol ?? e.id_rol ?? e.usuario?.idRol ?? e.usuario?.id_rol ?? 0);
-                  const isCurrent = formData.idEmpleado && String(e.idEmpleado) === String(formData.idEmpleado);
-                  return roleId === 3 || isCurrent;
-                })
-                .map((e) => (
+              {vendedoresDisponibles.length === 0 ? (
+                <SelectItem value="none" disabled>
+                  No hay vendedores registrados en el sistema
+                </SelectItem>
+              ) : (
+                vendedoresDisponibles.map((e) => (
                   <SelectItem key={e.idEmpleado} value={e.idEmpleado.toString()}>
                     {e.nombre} {e.apellido}
                   </SelectItem>
-                ))}
+                ))
+              )}
             </SelectContent>
           </Select>
+          {vendedoresDisponibles.length === 0 && (
+            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-1 flex items-start gap-1">
+              <span>⚠️ Para asignar una ruta, primero debes registrar un empleado con el rol de Vendedor en el módulo de Empleados.</span>
+            </p>
+          )}
         </div>
       </div>
 

@@ -54,7 +54,7 @@ export default function SalesTableModal({ ventas = [], onView, onPdf }) {
                 <div className="font-medium text-slate-900 dark:text-slate-200">{venta.cliente}</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">{venta.identificacion}</div>
               </TableCell>
-              <TableCell className="px-6 py-4 text-slate-600 dark:text-slate-350">
+              <TableCell className="px-6 py-4 text-slate-600 dark:text-slate-200">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-600"></div>
                   {venta.fecha}

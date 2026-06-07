@@ -19,6 +19,14 @@ const SuccessToast = ({
   const bgBarBase = isError ? "bg-red-100" : "bg-emerald-100";
   const bgBarProgress = isError ? "bg-red-500" : "bg-emerald-500";
 
+  React.useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(() => {
+      if (onClose) onClose();
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [visible, onClose]);
+
   return (
     <div
       style={{

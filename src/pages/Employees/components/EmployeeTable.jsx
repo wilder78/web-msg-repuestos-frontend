@@ -95,15 +95,14 @@ export function EmployeeTable({
                   </Badge>
                 </TableCell>
 
-                {/* Contacto */}
                 <TableCell className="px-6 py-4">
-                  <div className="flex flex-col gap-1 text-[13px] text-slate-600 dark:text-zinc-350 font-medium">
+                  <div className="flex flex-col gap-1 text-[13px] text-slate-600 dark:text-zinc-200 font-medium">
                     <div className="flex items-center gap-2">
-                      <Phone size={14} className="text-slate-350 dark:text-zinc-500" />{" "}
+                      <Phone size={14} className="text-slate-400 dark:text-zinc-500" />{" "}
                       {empleado.telefono || "-"}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Mail size={14} className="text-slate-350 dark:text-zinc-500" />{" "}
+                      <Mail size={14} className="text-slate-400 dark:text-zinc-500" />{" "}
                       {empleado.email || "-"}
                     </div>
                   </div>

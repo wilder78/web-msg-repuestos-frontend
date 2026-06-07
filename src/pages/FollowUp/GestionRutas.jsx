@@ -89,11 +89,11 @@ const GestionRutas = () => {
             .filter((emp) => {
               const roleId =
                 emp.usuario?.idRol ||
-                emp.usuario?.id_rol ||
+                emp.usuario?.id_role ||
                 emp.usuario?.rol?.idRol ||
                 emp.idRol ||
-                emp.id_rol;
-              return Number(roleId) === 3 || Number(roleId) === 2 || !roleId; // Loosened for debugging
+                emp.id_role;
+              return Number(roleId) === 3;
             })
             .map((emp) => ({
               ...emp,

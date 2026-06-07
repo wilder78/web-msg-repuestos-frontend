@@ -47,7 +47,7 @@ const RouteEditModal = ({
       const initialValues = {
         nombreRuta: route.nombreRuta || "",
         idZona: route.idZona?.toString() || "",
-        idEmpleado: route.idEmpleado?.toString() || "",
+        idEmpleado: (route.idEmpleado ?? route.id_empleado ?? route.empleado?.idEmpleado ?? route.empleado?.id_empleado)?.toString() || "",
         fechaPlanificada: formattedDate,
         detalles: route.detalles || [],
       };

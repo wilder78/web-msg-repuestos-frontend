@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { ClipboardList, CreditCard, PackageCheck, Printer, ReceiptText } from "lucide-react";
+import { ClipboardList, CreditCard, PackageCheck, Printer, ReceiptText, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "../../components/Navbar/PublicNavbar";
 import Footer from "../../components/Footer/Footer";
 import WhatsAppButton from "../../components/shared/WhatsAppButton";
@@ -376,6 +376,9 @@ export default function OrderHistoryPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState("");
   const [printOrder, setPrintOrder] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const roleId = getRoleId(user);
   const isAllowedRole = roleId === 3 || roleId === 4 || roleId === 7;
@@ -533,6 +536,38 @@ export default function OrderHistoryPage() {
     };
   }, [isAllowedRole, isAuthenticated, loadHistory, loading]);
 
+  const filteredOrders = useMemo(() => {
+    if (!searchTerm.trim()) return orders;
+    const term = searchTerm.toLowerCase().trim();
+    return orders.filter((order) => {
+      const orderId = String(order.id_pedido ?? order.idPedido ?? order.id ?? "");
+      const dateStr = order.fecha_pedido ? new Date(order.fecha_pedido).toLocaleDateString("es-CO").toLowerCase() : "";
+      const customerName = getCustomerName(order).toLowerCase();
+      const customerDoc = getCustomerDocument(order).toLowerCase();
+      const dispatchStatus = String(order.estado_despacho || "").toLowerCase();
+      const paymentStatus = String(order.estado_pago || "").toLowerCase();
+      
+      return (
+        orderId.includes(term) ||
+        dateStr.includes(term) ||
+        customerName.includes(term) ||
+        customerDoc.includes(term) ||
+        dispatchStatus.includes(term) ||
+        paymentStatus.includes(term)
+      );
+    });
+  }, [orders, searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredOrders, currentPage, itemsPerPage]);
+
   const summary = useMemo(() => {
     const totalPedidos = orders.length;
     const totalFacturado = orders.reduce(
@@ -647,7 +682,7 @@ export default function OrderHistoryPage() {
         </section>
 
         <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-center justify-between gap-3">
+          <div className="mb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-950">Detalle del historial</h2>
               <p className="mt-1 text-sm text-slate-500">
@@ -655,6 +690,16 @@ export default function OrderHistoryPage() {
                   ? "Solo se muestran pedidos asociados a tu gestion comercial."
                   : "Solo se muestran los pedidos vinculados a tu cuenta de cliente."}
               </p>
+            </div>
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por número, fecha, estado..."
+                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
             </div>
           </div>
 
@@ -670,89 +715,140 @@ export default function OrderHistoryPage() {
             <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-10 text-center text-sm font-medium text-slate-400">
               No hay registros disponibles para esta cuenta.
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-100">
-                <thead>
-                  <tr className="text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    <th className="px-4 py-3">Pedido</th>
-                    <th className="px-4 py-3">Cliente</th>
-                    <th className="px-4 py-3">Despacho</th>
-                    <th className="px-4 py-3">Pago</th>
-                    <th className="px-4 py-3 text-center">Comprobante</th>
-                    <th className="px-4 py-3 text-right">Total</th>
-                    <th className="px-4 py-3 text-right">Abonado</th>
-                    <th className="px-4 py-3 text-right">Saldo</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {orders.map((order) => {
-                    const orderId = order.id_pedido ?? order.idPedido ?? order.id;
-                    const total = Number(order.total_neto ?? order.totalNeto ?? 0);
-                    const paid = Number(order.total_abonado ?? 0);
-                    const pending = Number(order.saldo_pendiente ?? 0);
-                    const dispatchStatus = order.estado_despacho || "Sin estado";
-                    const paymentStatus = order.estado_pago || "Pendiente";
-
-                    return (
-                      <tr key={orderId} className="align-top">
-                        <td className="px-4 py-4">
-                          <p className="text-sm font-semibold text-slate-900">#{orderId}</p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {order.fecha_pedido
-                              ? new Date(order.fecha_pedido).toLocaleDateString("es-CO")
-                              : "Sin fecha"}
-                          </p>
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="text-sm font-medium text-slate-800">{getCustomerName(order)}</p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {order?.cliente?.numeroDocumento || order?.cliente?.numero_documento || "Documento no registrado"}
-                          </p>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getDispatchBadgeClass(
-                              dispatchStatus
-                            )}`}
-                          >
-                            {dispatchStatus}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getPaymentBadgeClass(
-                              paymentStatus
-                            )}`}
-                          >
-                            {paymentStatus}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handlePrintOrder(order)}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                          >
-                            <Printer className="h-3.5 w-3.5" />
-                            Imprimir
-                          </button>
-                        </td>
-                        <td className="px-4 py-4 text-right text-sm font-semibold text-slate-900">
-                          {formatCurrency(total)}
-                        </td>
-                        <td className="px-4 py-4 text-right text-sm text-slate-700">
-                          {formatCurrency(paid)}
-                        </td>
-                        <td className="px-4 py-4 text-right text-sm font-semibold text-slate-900">
-                          {formatCurrency(pending)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+          ) : filteredOrders.length === 0 ? (
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-10 text-center text-sm font-medium text-slate-400">
+              No se encontraron pedidos que coincidan con la búsqueda.
             </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-100">
+                  <thead>
+                    <tr className="text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <th className="px-4 py-3">Pedido</th>
+                      <th className="px-4 py-3">Cliente</th>
+                      <th className="px-4 py-3">Despacho</th>
+                      <th className="px-4 py-3">Pago</th>
+                      <th className="px-4 py-3 text-center">Comprobante</th>
+                      <th className="px-4 py-3 text-right">Total</th>
+                      <th className="px-4 py-3 text-right">Abonado</th>
+                      <th className="px-4 py-3 text-right">Saldo</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {paginatedOrders.map((order) => {
+                      const orderId = order.id_pedido ?? order.idPedido ?? order.id;
+                      const total = Number(order.total_neto ?? order.totalNeto ?? 0);
+                      const paid = Number(order.total_abonado ?? 0);
+                      const pending = Number(order.saldo_pendiente ?? 0);
+                      const dispatchStatus = order.estado_despacho || "Sin estado";
+                      const paymentStatus = order.estado_pago || "Pendiente";
+
+                      return (
+                        <tr key={orderId} className="align-top">
+                          <td className="px-4 py-4">
+                            <p className="text-sm font-semibold text-slate-900">#{orderId}</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {order.fecha_pedido
+                                ? new Date(order.fecha_pedido).toLocaleDateString("es-CO")
+                                : "Sin fecha"}
+                            </p>
+                          </td>
+                          <td className="px-4 py-4">
+                            <p className="text-sm font-medium text-slate-800">{getCustomerName(order)}</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {order?.cliente?.numeroDocumento || order?.cliente?.numero_documento || "Documento no registrado"}
+                            </p>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span
+                              className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getDispatchBadgeClass(
+                                dispatchStatus
+                              )}`}
+                            >
+                              {dispatchStatus}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span
+                              className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getPaymentBadgeClass(
+                                paymentStatus
+                              )}`}
+                            >
+                              {paymentStatus}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handlePrintOrder(order)}
+                              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+                              <Printer className="h-3.5 w-3.5" />
+                              Imprimir
+                            </button>
+                          </td>
+                          <td className="px-4 py-4 text-right text-sm font-semibold text-slate-900">
+                            {formatCurrency(total)}
+                          </td>
+                          <td className="px-4 py-4 text-right text-sm text-slate-700">
+                            {formatCurrency(paid)}
+                          </td>
+                          <td className="px-4 py-4 text-right text-sm font-semibold text-slate-900">
+                            {formatCurrency(pending)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer de Paginación */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 pt-6">
+                  <p className="text-xs font-medium text-slate-500">
+                    Mostrando <span className="font-semibold text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> a{" "}
+                    <span className="font-semibold text-slate-800">
+                      {Math.min(currentPage * itemsPerPage, filteredOrders.length)}
+                    </span>{" "}
+                    de <span className="font-semibold text-slate-800">{filteredOrders.length}</span> registros
+                  </p>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-100 bg-slate-50/50 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="rounded-full p-1.5 text-slate-500 transition-all hover:bg-white hover:text-slate-700 hover:shadow-sm disabled:pointer-events-none disabled:opacity-40"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`min-w-8 h-8 rounded-full text-xs font-semibold transition-all ${
+                          currentPage === pageNum
+                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                            : "text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="rounded-full p-1.5 text-slate-500 transition-all hover:bg-white hover:text-slate-700 hover:shadow-sm disabled:pointer-events-none disabled:opacity-40"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>

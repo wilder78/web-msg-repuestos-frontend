@@ -121,7 +121,7 @@ const RouteDetailsModal = ({ isOpen, onClose, route }) => {
             </InfoCard>
 
             {/* Asignación */}
-            <InfoCard icon={Truck} iconColor="violet" title="Asignación">
+            <InfoCard icon={User} iconColor="violet" title="Asignación">
               <div>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 mb-1">Zona Operativa</p>
                 <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
@@ -130,7 +130,7 @@ const RouteDetailsModal = ({ isOpen, onClose, route }) => {
               </div>
               <Separator className="my-2 dark:bg-zinc-800" />
               <div>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 mb-1">Encargado / Empleado</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mb-1">Vendedor Asignado</p>
                 <span className="text-xs bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-300 px-2 py-1 rounded-md">
                   {nombreEmpleado}
                 </span>
