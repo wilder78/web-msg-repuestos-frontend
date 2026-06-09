@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { toast } from "sonner";
+import SuccessToast from "../ui/SuccessToast";
 
 import { CustomerForm } from "../../pages/Customers/components/CustomerForm";
 import { UserForm } from "../../pages/Users/components/UserForm";
@@ -61,6 +62,7 @@ const toProductFormData = (data, imageFile = null) => {
 
   Object.entries(data).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
+    if (["selectedFile", "preview", "imagen", "imagen_url", "imagenUrl"].includes(key)) return;
     const backendKey = keyMap[key] || key;
 
     if (["precio_compra", "precio_publico", "precio_mayorista", "precio_minorista"].includes(backendKey)) {
@@ -130,6 +132,12 @@ const WindowContent = ({ win, onClose }) => {
   const { updateWindowFormState } = useModalDock();
   const [isFormValid, setIsFormValid] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [toastConfig, setToastConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "success"
+  });
   
   const [zonas, setZonas] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -1315,7 +1323,12 @@ const WindowContent = ({ win, onClose }) => {
 
       onClose();
     } catch (err) {
-      toast.error(err.message || "Error al conectar con el servidor.");
+      setToastConfig({
+        visible: true,
+        title: "Error al guardar",
+        message: err.message || "Error al conectar con el servidor.",
+        type: "error"
+      });
     } finally {
       setIsSaving(false);
     }
@@ -1344,6 +1357,10 @@ const WindowContent = ({ win, onClose }) => {
 
   return (
     <div className="flex flex-col h-full justify-between">
+      <SuccessToast
+        {...toastConfig}
+        onClose={() => setToastConfig((p) => ({ ...p, visible: false }))}
+      />
       <div className="p-5 overflow-y-auto max-h-[420px] flex-1">
         {win.type.startsWith("customer-") ? (
           <CustomerForm
