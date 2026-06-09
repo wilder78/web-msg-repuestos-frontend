@@ -1,6 +1,23 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Phone, Mail, Facebook, Instagram, Youtube, ChevronRight } from "lucide-react";
+import { MapPin, Phone, Mail, Facebook, Instagram, ChevronRight } from "lucide-react";
+
+const TiktokIcon = ({ size = 16, className }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    width={size}
+    height={size}
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
 
 const quickLinks = [
   { to: "/", label: "Inicio" },
@@ -18,7 +35,7 @@ const customerLinks = [
 const socialLinks = [
   { href: "#", icon: Facebook, label: "Facebook" },
   { href: "#", icon: Instagram, label: "Instagram" },
-  { href: "#", icon: Youtube, label: "YouTube" },
+  { href: "#", icon: TiktokIcon, label: "TikTok" },
 ];
 
 export default function Footer() {

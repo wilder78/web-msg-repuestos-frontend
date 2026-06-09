@@ -12,13 +12,25 @@ import { ShoppingCart, Loader2 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../hooks/useAuth";
 
-const marcas = [
-  { id: 1, name: "Honda", logo: "https://upload.wikimedia.org/wikipedia/commons/3/38/Honda.svg" },
-  { id: 2, name: "Yamaha", logo: "https://upload.wikimedia.org/wikipedia/commons/e/e9/Yamaha_logo.svg" },
-  { id: 3, name: "Suzuki", logo: "https://upload.wikimedia.org/wikipedia/commons/1/12/Suzuki_logo_2.svg" },
-  { id: 4, name: "Kawasaki", logo: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Kawasaki_logo.svg" },
-  { id: 5, name: "Bajaj", logo: "https://upload.wikimedia.org/wikipedia/commons/b/b8/Bajaj_Auto_Logo.svg" },
-  { id: 6, name: "Motul", logo: "https://upload.wikimedia.org/wikipedia/commons/8/87/Motul_logo.svg" },
+// Import local brands images
+import logoAx4 from "../assets/marcas/ax4-110.png";
+import logoBoxer from "../assets/marcas/boxer-ct-100.png";
+import logoDiscovery from "../assets/marcas/discovery.png";
+import logoEcoDeluxe from "../assets/marcas/eco-deluxe.png";
+import logoNkd from "../assets/marcas/nkd-125.png";
+import logoNmax from "../assets/marcas/nmax-155.png";
+import logoTvs from "../assets/marcas/tvs-apache.png";
+import logoXtz from "../assets/marcas/xtz-150.png";
+
+const marcasCooperativas = [
+  { id: 1, name: "Suzuki AX4", logo: logoAx4 },
+  { id: 2, name: "Bajaj Boxer", logo: logoBoxer },
+  { id: 3, name: "Bajaj Discovery", logo: logoDiscovery },
+  { id: 4, name: "Hero Eco Deluxe", logo: logoEcoDeluxe },
+  { id: 5, name: "AKT NKD", logo: logoNkd },
+  { id: 6, name: "Yamaha NMAX", logo: logoNmax },
+  { id: 7, name: "TVS Apache", logo: logoTvs },
+  { id: 8, name: "Yamaha XTZ", logo: logoXtz },
 ];
 
 const ProductCard = ({ product, showNew = false }) => {
@@ -199,21 +211,56 @@ const Home = () => {
         {/* Accesorios de Lujo Más Vendidos */}
         <LuxuryAccessoriesCarousel products={topAccesorios} />
 
-        {/* Carrusel de Marcas */}
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+        {/* Carrusel de Marcas Cooperativas */}
+        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-20">
+          <style>{`
+            @keyframes marquee {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-marquee-brands {
+              display: flex;
+              width: max-content;
+              animation: marquee 35s linear infinite;
+            }
+            .animate-marquee-brands:hover {
+              animation-play-state: paused;
+            }
+          `}</style>
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
-              Marcas que Comercializamos
+              Productos para cada moto y estilo
             </h2>
-            <p className="text-slate-500">Repuestos y accesorios para motos de las mejores marcas del mercado.</p>
+            <p className="text-slate-500 text-sm font-medium">
+              Repuestos y accesorios para los modelos más vendidos en Colombia
+            </p>
           </div>
-          <div className="flex overflow-x-auto gap-12 pb-4 snap-x items-center justify-start md:justify-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {marcas.map(marca => (
-              <div key={marca.id} className="min-w-[120px] snap-center flex flex-col items-center gap-3 opacity-70 hover:opacity-100 transition-opacity grayscale hover:grayscale-0">
-                <img src={marca.logo} alt={marca.name} className="h-16 object-contain" />
-                <span className="text-sm font-semibold text-slate-600">{marca.name}</span>
-              </div>
-            ))}
+          
+          <div className="relative w-full overflow-hidden">
+            {/* Gradient masks on sides for a beautiful fading edge effect */}
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            
+            <div className="animate-marquee-brands py-4 gap-6">
+              {/* Double the list to make loop seamless */}
+              {[...marcasCooperativas, ...marcasCooperativas, ...marcasCooperativas].map((marca, index) => (
+                <div
+                  key={`${marca.id}-${index}`}
+                  className="w-80 h-48 flex-shrink-0 relative overflow-hidden rounded-2xl cursor-pointer group shadow-sm hover:shadow-xl transition-shadow duration-300"
+                >
+                  <img
+                    src={marca.logo}
+                    alt={marca.name}
+                    className="w-full h-full object-cover filter grayscale opacity-75 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 rounded-2xl"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                    <span className="text-white text-sm font-bold tracking-wide">
+                      {marca.name}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

@@ -3,6 +3,7 @@ import Navbar from "../../components/Navbar/PublicNavbar";
 import Footer from "../../components/Footer/Footer";
 import WhatsAppButton from "../../components/shared/WhatsAppButton";
 import { UserCircle, Wrench, ShieldCheck, HeartHandshake } from "lucide-react";
+import nosotrosHero from "../../assets/repuestos_banner.png";
 
 export default function GestionNosotros() {
   const team = [
@@ -33,7 +34,10 @@ export default function GestionNosotros() {
       <div className="flex-1">
         {/* Hero Section */}
       <section className="relative bg-blue-900 text-white py-20 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1486006920555-c77dcf18193c?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-20"></div>
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${nosotrosHero})` }}
+        ></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
             Conoce a <span className="text-blue-400">MSG Repuestos</span>
