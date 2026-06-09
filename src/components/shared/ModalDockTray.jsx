@@ -173,6 +173,71 @@ const WindowContent = ({ win, onClose }) => {
         idDepartamento: "",
         idMunicipio: "",
       }
+    : win.type === "customer-edit"
+    ? (() => {
+        const c = win.data || {};
+        let idDepto = c.idDepartamento?.toString() || c.id_departamento?.toString() || "";
+
+        if (!idDepto && departments.length > 0) {
+          const nombreDepto =
+            c.municipio?.departamento?.nombre ||
+            c.municipio?.departamento?.name ||
+            c.departamento?.nombre ||
+            c.departamento?.name ||
+            "";
+
+          if (nombreDepto) {
+            const found = departments.find(
+              (d) =>
+                (
+                  d.nombre ||
+                  d.name ||
+                  d.nombreDepartamento ||
+                  d.nombre_departamento ||
+                  ""
+                ).toLowerCase() === nombreDepto.toLowerCase(),
+            );
+            idDepto = found
+              ? (
+                  found.id ||
+                  found.idDepartamento ||
+                  found.id_departamento
+                ).toString()
+              : "";
+          }
+        }
+
+        const idMuni =
+          c.municipioId?.toString() ||
+          c.idMunicipio?.toString() ||
+          c.id_municipio?.toString() ||
+          c.municipio?.id?.toString() ||
+          c.municipio?.idMunicipio?.toString() ||
+          "";
+
+        return {
+          idTipoDocumento: (
+            c.idTipoDocumento ??
+            c.idtipodocumento ??
+            c.id_tipo_documento ??
+            "1"
+          ).toString(),
+          numeroDocumento:
+            c.numeroDocumento || c.numerodocumento || c.numero_documento || "",
+          razonSocial: c.razonSocial || c.razon_social || "",
+          personaContacto: c.personaContacto || c.persona_contacto || "",
+          direccion: c.direccion || "",
+          telefono: c.telefono || "",
+          email: c.email || "",
+          tipoCliente: c.tipoCliente || c.tipo_cliente || "Mayorista",
+          cupoCredito: (c.cupoCredito ?? c.cupo_credito) != null ? (c.cupoCredito ?? c.cupo_credito).toString() : "0",
+          idZona: (c.idZona ?? c.id_zona) ? (c.idZona ?? c.id_zona).toString() : "",
+          idDepartamento: idDepto,
+          idMunicipio: idMuni,
+          idEstado:
+            (c.idEstado ?? c.id_estado) !== undefined ? (c.idEstado ?? c.id_estado).toString() : c.activo ? "1" : "0",
+        };
+      })()
     : win.type === "user-create"
     ? {
         nombreUsuario: "",
@@ -456,12 +521,17 @@ const WindowContent = ({ win, onClose }) => {
 
   const currentFormState = { ...defaultFormState, ...win.formState };
 
-  // Captura el snapshot inicial del formulario solo una vez al montar (para ventanas tipo -edit)
+  // Captura el snapshot inicial del formulario solo una vez al terminar la carga inicial (para ventanas tipo -edit)
   useEffect(() => {
-    if (win.type.endsWith("-edit") && !initialFormSnapshot.current) {
-      initialFormSnapshot.current = JSON.stringify(currentFormState);
+    if (win.type.endsWith("-edit") && initLoaded) {
+      if (win.type === "role-edit" && !win.formState.selectedPermIds) {
+        return;
+      }
+      if (!initialFormSnapshot.current) {
+        initialFormSnapshot.current = JSON.stringify(currentFormState);
+      }
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initLoaded, win.type, currentFormState, win.formState.selectedPermIds]);
 
   useEffect(() => {
     // Cargar listas iniciales según tipo de ventana para no hacer peticiones innecesarias

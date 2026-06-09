@@ -56,6 +56,9 @@ export const useLogin = (isOpen, onClose) => {
         const userRol =
           response.idRol || response.user?.idRol || response.data?.idRol;
 
+        // ACCIÓN DE VALIDACIÓN: Añadir console.log(user.permisos) inmediatamente después de la acción de login
+        console.log("user.permisos (Login):", response.user?.permisos || response.data?.user?.permisos);
+
         setLoading("success");
 
         setTimeout(() => {

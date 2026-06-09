@@ -131,18 +131,18 @@ const CustomerEditModal = ({
       ).toString(),
       numeroDocumento:
         c.numeroDocumento || c.numerodocumento || c.numero_documento || "",
-      razonSocial: c.razonSocial || "",
-      personaContacto: c.personaContacto || "",
+      razonSocial: c.razonSocial || c.razon_social || "",
+      personaContacto: c.personaContacto || c.persona_contacto || "",
       direccion: c.direccion || "",
       telefono: c.telefono || "",
       email: c.email || "",
-      tipoCliente: c.tipoCliente || "Mayorista",
-      cupoCredito: c.cupoCredito != null ? c.cupoCredito.toString() : "0",
-      idZona: c.idZona ? c.idZona.toString() : "",
+      tipoCliente: c.tipoCliente || c.tipo_cliente || "Mayorista",
+      cupoCredito: (c.cupoCredito ?? c.cupo_credito) != null ? (c.cupoCredito ?? c.cupo_credito).toString() : "0",
+      idZona: (c.idZona ?? c.id_zona) ? (c.idZona ?? c.id_zona).toString() : "",
       idDepartamento: idDepto,
       idMunicipio: idMuni,
       idEstado:
-        c.idEstado !== undefined ? c.idEstado.toString() : c.activo ? "1" : "0",
+        (c.idEstado ?? c.id_estado) !== undefined ? (c.idEstado ?? c.id_estado).toString() : c.activo ? "1" : "0",
     };
   }, []);
 

@@ -7,6 +7,7 @@ import TablePagination from "../../components/shared/TablePagination";
 import SuccessToast from "../../components/ui/SuccessToast";
 import PrintableDocument from "../../components/shared/PrintableDocument";
 import { useModalDock } from "../../contexts/ModalDockContext";
+import { useAuth } from "../../hooks/useAuth";
 
 import CompraTable from "./components/CompraTable";
 import CompraDetailsModal from "./components/CompraDetailsModal";
@@ -26,6 +27,7 @@ const buildInitialCreateState = () => ({
 const GestionCompras = () => {
     const { compras, loading, error, isAdmin, statuses, updateStatus, refresh } = useCompras();
     const { openWindow } = useModalDock();
+    const { hasPermission } = useAuth();
 
     /* Búsqueda y paginación */
     const [searchTerm, setSearchTerm] = useState("");
@@ -90,8 +92,8 @@ const GestionCompras = () => {
         setTimeout(() => window.print(), 200);
     };
 
-    /* ── Guard: sólo Administradores ──────────────────────── */
-    if (!isAdmin()) {
+    /* ── Guard: sólo usuarios autorizados ─────────────────── */
+    if (!hasPermission("COMPRAS_ACCESS")) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center bg-transparent">
                 <div className="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6 shadow-sm border-4 border-white">
@@ -101,7 +103,7 @@ const GestionCompras = () => {
                 <p className="text-slate-500 mt-3 max-w-md mx-auto text-lg leading-relaxed">
                     La gestión de compras e ingreso de inventario está protegida.{" "}
                     <span className="font-bold text-slate-700 block mt-2">
-                        Solo un perfil Administrador puede acceder a este módulo.
+                        Solo un perfil autorizado puede acceder a este módulo.
                     </span>
                 </p>
             </div>

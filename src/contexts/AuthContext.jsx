@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
 
       try {
         // 1. Verificar el token con el endpoint de perfil
-        await api.get("/users/profile");
+        const profileRes = await api.get("/users/profile");
         setIsAuthenticated(true);
 
         // 2. Cargar permisos y normalizar el usuario
@@ -61,6 +61,11 @@ export function AuthProvider({ children }) {
           const isAct = rawActive === true || rawActive === 1 || rawActive === "1" || rawActive === "true";
           parsedUser.is_active = isAct;
           parsedUser.isActive = isAct;
+          
+          if (profileRes.data?.permisos) {
+            parsedUser.permisos = profileRes.data.permisos;
+            localStorage.setItem("user", JSON.stringify(parsedUser));
+          }
           setUser(parsedUser);
         }
 
@@ -81,43 +86,40 @@ export function AuthProvider({ children }) {
         }
 
         // CASO C: CUALQUIER OTRO ROL PRESENTE O FUTURO
-        const cachedPerms = sessionStorage.getItem(PERMS_CACHE_KEY);
-        if (cachedPerms) {
-          const parsedCache = JSON.parse(cachedPerms);
-          setPermisos(Array.isArray(parsedCache) ? parsedCache : []);
-          setLoading(false);
-          return;
-        }
+        let names = profileRes.data?.permisos;
+        
+        if (!names || !Array.isArray(names) || names.length === 0) {
+          const rolePermsRes = await api.get("/role-permissions/");
+          const rolePerms = Array.isArray(rolePermsRes.data)
+            ? rolePermsRes.data
+            : rolePermsRes.data?.data ?? [];
 
-        const rolePermsRes = await api.get("/role-permissions/");
-        const rolePerms = Array.isArray(rolePermsRes.data)
-          ? rolePermsRes.data
-          : rolePermsRes.data?.data ?? [];
-
-        const myPerms = rolePerms.filter(
-          (rp) => Number(rp.idRol ?? rp.id_rol) === roleId
-        );
-
-        let names = myPerms
-          .map((rp) => rp.permiso?.nombrePermiso ?? rp.nombrePermiso ?? null)
-          .filter(Boolean);
-
-        if (names.length === 0 && myPerms.length > 0) {
-          const allPermsRes = await api.get("/permissions");
-          const allPerms = Array.isArray(allPermsRes.data)
-            ? allPermsRes.data
-            : allPermsRes.data?.data ?? [];
-          const allowedIds = myPerms.map(
-            (rp) => Number(rp.idPermiso ?? rp.id_permiso ?? rp.id)
+          const myPerms = rolePerms.filter(
+            (rp) => Number(rp.idRol ?? rp.id_rol) === roleId
           );
-          names = allPerms
-            .filter((p) =>
-              allowedIds.includes(Number(p.idPermiso ?? p.id_permiso ?? p.id))
-            )
-            .map((p) => p.nombrePermiso)
+
+          names = myPerms
+            .map((rp) => rp.permiso?.nombrePermiso ?? rp.nombrePermiso ?? null)
             .filter(Boolean);
+
+          if (names.length === 0 && myPerms.length > 0) {
+            const allPermsRes = await api.get("/permissions");
+            const allPerms = Array.isArray(allPermsRes.data)
+              ? allPermsRes.data
+              : allPermsRes.data?.data ?? [];
+            const allowedIds = myPerms.map(
+              (rp) => Number(rp.idPermiso ?? rp.id_permiso ?? rp.id)
+            );
+            names = allPerms
+              .filter((p) =>
+                allowedIds.includes(Number(p.idPermiso ?? p.id_permiso ?? p.id))
+              )
+              .map((p) => p.nombrePermiso)
+              .filter(Boolean);
+          }
         }
 
+        console.log("user.permisos cargados:", names);
         setPermisos(names);
         sessionStorage.setItem(PERMS_CACHE_KEY, JSON.stringify(names));
       } catch (error) {
