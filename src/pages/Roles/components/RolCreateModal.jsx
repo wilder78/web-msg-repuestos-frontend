@@ -245,16 +245,15 @@ const RolCreateModal = ({ isOpen, onClose, onRolCreated, onRolError }) => {
       if (!nuevoRolId) throw new Error("Rol creado, pero no se recibió el ID.");
 
       if (selectedPermIds.length > 0) {
-        const assignPromises = selectedPermIds.map((permId) =>
-          authFetch("/api/role-permissions/assign", {
+        for (const permId of selectedPermIds) {
+          await authFetch("/api/role-permissions/assign", {
             method: "POST",
             body: JSON.stringify({
               idRol: Number(nuevoRolId),
               idPermiso: Number(permId),
             }),
-          }),
-        );
-        await Promise.all(assignPromises);
+          });
+        }
       }
 
       setSaveSuccess(true);

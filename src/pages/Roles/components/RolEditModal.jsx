@@ -259,28 +259,24 @@ const RolEditModal = ({
       );
 
       if (idsToRemove.length > 0) {
-        await Promise.all(
-          idsToRemove.map((permId) =>
-            authFetch(`/api/role-permissions/revoke`, {
-              method: "DELETE",
-              body: JSON.stringify({
-                idRol: Number(rol?.id || rol?.idRol),
-                idPermiso: Number(permId),
-              }),
+        for (const permId of idsToRemove) {
+          await authFetch(`/api/role-permissions/revoke`, {
+            method: "DELETE",
+            body: JSON.stringify({
+              idRol: Number(rol?.id || rol?.idRol),
+              idPermiso: Number(permId),
             }),
-          ),
-        );
+          });
+        }
       }
 
       if (idsToAdd.length > 0) {
-        await Promise.all(
-          idsToAdd.map((permId) =>
-            authFetch("/api/role-permissions/assign", {
-              method: "POST",
-              body: JSON.stringify({ idRol: rol?.id, idPermiso: permId }),
-            }),
-          ),
-        );
+        for (const permId of idsToAdd) {
+          await authFetch("/api/role-permissions/assign", {
+            method: "POST",
+            body: JSON.stringify({ idRol: rol?.id, idPermiso: permId }),
+          });
+        }
       }
 
       setSaveSuccess(true);

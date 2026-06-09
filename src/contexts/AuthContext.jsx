@@ -64,7 +64,12 @@ export function AuthProvider({ children }) {
           
           if (profileRes.data?.permisos) {
             parsedUser.permisos = profileRes.data.permisos;
-            localStorage.setItem("user", JSON.stringify(parsedUser));
+            if (localStorage.getItem("user")) {
+              localStorage.setItem("user", JSON.stringify(parsedUser));
+            }
+            if (sessionStorage.getItem("user")) {
+              sessionStorage.setItem("user", JSON.stringify(parsedUser));
+            }
           }
           setUser(parsedUser);
         }

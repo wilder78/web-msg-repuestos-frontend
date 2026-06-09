@@ -1254,16 +1254,15 @@ const WindowContent = ({ win, onClose }) => {
 
         if (win.type === "role-create") {
           if (selectedPermIds.length > 0) {
-            const assignPromises = selectedPermIds.map((permId) =>
-              authFetch("/api/role-permissions/assign", {
+            for (const permId of selectedPermIds) {
+              await authFetch("/api/role-permissions/assign", {
                 method: "POST",
                 body: JSON.stringify({
                   idRol: Number(roleId),
                   idPermiso: Number(permId),
                 }),
-              })
-            );
-            await Promise.all(assignPromises);
+              });
+            }
           }
         } else {
           const initialPermIds = currentFormState.initialPermIds || [];
@@ -1271,31 +1270,27 @@ const WindowContent = ({ win, onClose }) => {
           const idsToRemove = initialPermIds.filter(id => !selectedPermIds.includes(id));
 
           if (idsToRemove.length > 0) {
-            await Promise.all(
-              idsToRemove.map((permId) =>
-                authFetch(`/api/role-permissions/revoke`, {
-                  method: "DELETE",
-                  body: JSON.stringify({
-                    idRol: Number(roleId),
-                    idPermiso: Number(permId),
-                  }),
-                })
-              )
-            );
+            for (const permId of idsToRemove) {
+              await authFetch(`/api/role-permissions/revoke`, {
+                method: "DELETE",
+                body: JSON.stringify({
+                  idRol: Number(roleId),
+                  idPermiso: Number(permId),
+                }),
+              });
+            }
           }
 
           if (idsToAdd.length > 0) {
-            await Promise.all(
-              idsToAdd.map((permId) =>
-                authFetch("/api/role-permissions/assign", {
-                  method: "POST",
-                  body: JSON.stringify({
-                    idRol: Number(roleId),
-                    idPermiso: Number(permId),
-                  }),
-                })
-              )
-            );
+            for (const permId of idsToAdd) {
+              await authFetch("/api/role-permissions/assign", {
+                method: "POST",
+                body: JSON.stringify({
+                  idRol: Number(roleId),
+                  idPermiso: Number(permId),
+                }),
+              });
+            }
           }
         }
       }
