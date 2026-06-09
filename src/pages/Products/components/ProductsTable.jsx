@@ -93,7 +93,9 @@ const ProductsTable = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-bold text-slate-700 dark:text-slate-200">{p.nombre}</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-200 max-w-[280px] md:max-w-[340px] truncate block" title={p.nombre_original || p.nombre}>
+                      {p.nombre_original || p.nombre}
+                    </span>
                     <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                       ID: {p.idProducto || p.id_producto} | {p.referencia}
                     </span>
