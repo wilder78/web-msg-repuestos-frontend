@@ -13,7 +13,7 @@ const originalFetch = window.fetch;
 window.fetch = async (input, init) => {
   let url = typeof input === "string" ? input : (input instanceof URL ? input.href : (input && input.url) || "");
   
-  const apiBase = (import.meta.env.VITE_API_URL || "https://mediumturquoise-weasel-465724.hostingersite.com/api").replace(/\/$/, "");
+  const apiBase = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
   if (url.startsWith("/api")) {
     url = apiBase + url.slice(4);
@@ -22,7 +22,7 @@ window.fetch = async (input, init) => {
   } else if (url.startsWith("http://127.0.0.1:8080/api")) {
     url = apiBase + url.slice("http://127.0.0.1:8080/api".length);
   } else if (url.startsWith("http://localhost:8080/uploads")) {
-    url = "https://mediumturquoise-weasel-465724.hostingersite.com/uploads" + url.slice("http://localhost:8080/uploads".length);
+    url = "/uploads" + url.slice("http://localhost:8080/uploads".length);
   }
 
   let fetchInput = input;

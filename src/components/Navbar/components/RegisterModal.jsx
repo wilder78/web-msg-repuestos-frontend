@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { X, Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
-const API = (import.meta.env.VITE_API_URL || "http://localhost:8080/api").replace(/\/$/, "");
+const API = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
 const PASSWORD_RULES = [
   { re: /.{8,}/, label: "Mínimo 8 caracteres" },
@@ -84,16 +84,20 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
         @keyframes shine { from { transform:translateX(-100%) skewX(-15deg); } to { transform:translateX(200%) skewX(-15deg); } }
         .btn-nitro { position:relative; overflow:hidden; }
         .btn-nitro::after { content:""; position:absolute; top:0; left:0; width:50%; height:100%; background:linear-gradient(to right,transparent,rgba(255,255,255,0.2),transparent); animation:shine 3s infinite; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
       `}</style>
 
-      <div className="bg-[#0f0f12]/95 w-full max-w-md rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.7)] overflow-hidden relative animate-slide-up border border-white/10">
-        <div className="h-1.5 bg-gradient-to-r from-red-600 via-orange-500 to-red-600"></div>
+      <div className="bg-[#0f0f12]/95 w-full max-w-md rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.7)] overflow-hidden relative animate-slide-up border border-white/10 max-h-[90vh] flex flex-col">
+        <div className="h-1.5 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 shrink-0"></div>
 
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all z-10">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all z-20">
           <X size={20} />
         </button>
 
-        <div className="p-8 md:p-10">
+        <div className="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
           <header className="mb-8 text-center">
             <div className="flex justify-center mb-4">
               <div className="relative p-1 rounded-xl bg-gradient-to-b from-white/10 to-transparent">
