@@ -93,7 +93,7 @@ const GestionCompras = () => {
     };
 
     /* ── Guard: sólo usuarios autorizados ─────────────────── */
-    if (!hasPermission("COMPRAS_ACCESS")) {
+    if (!hasPermission("Listar Compras")) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center bg-transparent">
                 <div className="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6 shadow-sm border-4 border-white">

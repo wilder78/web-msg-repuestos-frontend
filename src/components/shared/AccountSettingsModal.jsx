@@ -189,9 +189,52 @@ export default function AccountSettingsModal({ isOpen, onClose }) {
       setError("");
 
       try {
+        const userEmail = String(user?.email ?? "").trim();
+
+        if (!isClient) {
+          const profileRes = await authFetch(`${API_BASE_URL}/users/profile`);
+          if (profileRes.ok) {
+            const profilePayload = await profileRes.json();
+            if (profilePayload.status === "success" && profilePayload.data) {
+              const pData = profilePayload.data;
+              const nextForm = {
+                id_tipo_documento: String(profilePayload.idTipoDocumento ?? profilePayload.id_tipo_documento ?? pData.idTipoDocumento ?? pData.id_tipo_documento ?? ""),
+                numero_documento: String(profilePayload.numeroDocumento ?? profilePayload.numero_documento ?? pData.numeroDocumento ?? pData.numero_documento ?? ""),
+                email: userEmail,
+                razon_social: String(pData.nombre ?? ""),
+                telefono: String(pData.telefono ?? ""),
+                direccion: String(pData.direccion ?? ""),
+                id_departamento: "",
+                municipio_id: "",
+              };
+              if (!ignore) {
+                setFormData(nextForm);
+                setInitialForm(nextForm);
+                setCustomerId(user?.idUsuario || user?.id || "user");
+              }
+              return;
+            }
+          }
+          const nextForm = {
+            id_tipo_documento: "",
+            numero_documento: "",
+            email: userEmail,
+            razon_social: String(user?.nombre ?? user?.nombreUsuario ?? ""),
+            telefono: String(user?.telefono ?? ""),
+            direccion: String(user?.direccion ?? ""),
+            id_departamento: "",
+            municipio_id: "",
+          };
+          if (!ignore) {
+            setFormData(nextForm);
+            setInitialForm(nextForm);
+            setCustomerId(user?.idUsuario || user?.id || "user");
+          }
+          return;
+        }
+
         const storedCustomerId =
           user?.idCliente ?? user?.idcliente ?? user?.id_cliente ?? null;
-        const userEmail = String(user?.email ?? "").trim();
 
         const urls = [
           ...(storedCustomerId ? [`${API_BASE_URL}/customers/${storedCustomerId}`] : []),
@@ -220,26 +263,8 @@ export default function AccountSettingsModal({ isOpen, onClose }) {
         if (ignore) return;
 
         if (!foundCustomer) {
-          if (isClient) {
-            setError("No encontramos un cliente asociado a tu cuenta para editar sus datos.");
-            return;
-          } else {
-            // Prepopulate for employee with user info
-            const nextForm = {
-              id_tipo_documento: "",
-              numero_documento: "",
-              email: userEmail,
-              razon_social: String(user?.nombre ?? user?.nombreUsuario ?? ""),
-              telefono: String(user?.telefono ?? ""),
-              direccion: String(user?.direccion ?? ""),
-              id_departamento: "",
-              municipio_id: "",
-            };
-            setFormData(nextForm);
-            setInitialForm(nextForm);
-            setCustomerId(user?.idUsuario || user?.id || "user");
-            return;
-          }
+          setError("No encontramos un cliente asociado a tu cuenta para editar sus datos.");
+          return;
         }
 
         let nextForm = buildFormFromCustomer(foundCustomer);
@@ -405,13 +430,11 @@ export default function AccountSettingsModal({ isOpen, onClose }) {
       } else {
         const payload = {
           nombre: formData.razon_social.trim(),
-          nombreUsuario: formData.razon_social.trim(),
-          email: formData.email,
           telefono: formData.telefono.trim(),
-          direccion: formData.direccion.trim(),
+          idTipoDocumento: formData.id_tipo_documento ? Number.parseInt(formData.id_tipo_documento, 10) : null,
+          numeroDocumento: formData.numero_documento.trim(),
         };
-        const userId = user?.idUsuario || user?.id || customerId;
-        response = await authFetch(`${API_BASE_URL}/users/${userId}`, {
+        response = await authFetch(`${API_BASE_URL}/users/profile`, {
           method: "PUT",
           body: JSON.stringify(payload),
         });
@@ -422,10 +445,14 @@ export default function AccountSettingsModal({ isOpen, onClose }) {
         throw new Error(result.message || result.error || "No se pudo actualizar tu perfil.");
       }
 
-      const savedEntity = unwrapEntity(result);
-      const nextForm = buildFormFromCustomer(savedEntity);
-      setFormData(nextForm);
-      setInitialForm(nextForm);
+      if (isClient) {
+        const savedEntity = unwrapEntity(result);
+        const nextForm = buildFormFromCustomer(savedEntity);
+        setFormData(nextForm);
+        setInitialForm(nextForm);
+      } else {
+        setInitialForm(formData);
+      }
       setToastConfig({
         visible: true,
         title: "Datos actualizados",

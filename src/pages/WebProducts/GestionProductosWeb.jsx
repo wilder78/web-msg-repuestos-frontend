@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/PublicNavbar";
 import Footer from "../../components/Footer/Footer";
 import WhatsAppButton from "../../components/shared/WhatsAppButton";
@@ -10,6 +11,8 @@ import api from "../../api/axios";
 export default function GestionProductosWeb() {
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSearch = searchParams.get("search") || "";
   
   // Estados para productos y paginación
   const [products, setProducts] = useState([]);
@@ -22,7 +25,12 @@ export default function GestionProductosWeb() {
   const [addedIds, setAddedIds] = useState({});
 
   // Estados de Filtros Solicitados
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(urlSearch);
+
+  // Sync state if URL changes
+  useEffect(() => {
+    setSearch(urlSearch);
+  }, [urlSearch]);
   const [categoria, setCategoria] = useState("");
   const [marca, setMarca] = useState("");
   const [precioMin, setPrecioMin] = useState("");
@@ -123,6 +131,7 @@ export default function GestionProductosWeb() {
   // Limpiar todos los filtros con un clic
   const handleClearFilters = () => {
     setSearch("");
+    setSearchParams({});
     setCategoria("");
     setMarca("");
     setPrecioMin("");

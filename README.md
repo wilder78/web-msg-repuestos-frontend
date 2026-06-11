@@ -155,9 +155,19 @@ A lo largo de las últimas actualizaciones, se han incorporado múltiples mejora
    - Interfaz interactiva de campana de notificaciones con conteo dinámico (*badge*), listado de scroll responsivo y opción para marcar notificaciones individuales o generales como leídas.
 
 5. **Mejoras del Editor de Pedidos:**
-   - Selector emergente rápido (Popover) con los tres precios base de repuestos (Al Detal, Minorista, Mayorista) integrado en los modales de creación y edición.
-   - Edición manual del campo `Precio Unit.` con recálculo dinámico en tiempo real de subtotales, IVA y total de la orden.
-   - Adaptación en modo oscuro de modales de edición, abonos y de restauración de estados de pedidos.
+    - Selector emergente rápido (Popover) con los tres precios base de repuestos (Al Detal, Minorista, Mayorista) integrado en los modales de creación y edición.
+    - Edición manual del campo `Precio Unit.` con recálculo dinámico en tiempo real de subtotales, IVA y total de la orden.
+    - Adaptación en modo oscuro de modales de edición, abonos y de restauración de estados de pedidos.
+
+6. **Buscador Funcional para el eCommerce (Público):**
+   - Implementación de motor de búsqueda interactivo en el Navbar público (`PublicNavbar` / `SearchBar`) con retraso controlado (debounce de 500ms) para proteger el servidor y disparo inmediato al presionar la tecla `Enter`.
+   - Redirección automática a la vista de catálogo de repuestos (`/repuestos?search=termino`) si el usuario inicia la búsqueda fuera de esta.
+   - Sincronización bidireccional y reactiva entre el parámetro de la URL (`?search=...`) y el estado del input de la barra de búsqueda.
+   - Actualización en el backend (`getAllProducts`) para admitir búsquedas avanzadas que incluyan la coincidencia de códigos de referencia (`referencia`) y nombres de categorías asociadas (`nombre_categoria`).
+
+7. **Estabilidad en Permisos y Accesibilidad de Compras:**
+   - Corrección del guardián del módulo administrativo de compras (`GestionCompras.jsx`), reemplazando la verificación del permiso incorrecto `"COMPRAS_ACCESS"` por el real de base de datos `"Listar Compras"`, permitiendo el acceso a perfiles autorizados como `Administrador`.
+   - Prevención de desbordamiento en el pool de conexiones del servidor/DB mediante la reestructuración a guardado secuencial (`for...of`) en los procesos de selección masiva de permisos de roles.
 
 ---
 
