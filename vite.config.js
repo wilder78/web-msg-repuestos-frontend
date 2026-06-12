@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: "0.0.0.0",   // escucha en todas las interfaces (IPv4 e IPv6)
+    host: "localhost",   // Fuerza el uso de localhost para compatibilidad con Google OAuth
     proxy: {
       "/api": {
         // Usar 127.0.0.1 en lugar de localhost:
