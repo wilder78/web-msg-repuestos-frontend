@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useLogin } from "../../../hooks/useLogin";
+import GoogleLoginButton from "../../auth/GoogleLoginButton";
 
 export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForgotPassword }) => {
   const { state, actions } = useLogin(isOpen, onClose);
@@ -186,17 +187,28 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
                 </div>
               </button>
 
-              {/* REGISTER */}
-              <p className="text-center text-sm text-gray-400 mt-4">
-                ¿No tienes cuenta?{" "}
-                <button
-                  onClick={onSwitchToRegister}
-                  className="text-red-400 hover:underline"
-                >
-                  Regístrate
-                </button>
-              </p>
             </form>
+
+            <div className="relative my-5 flex py-1 items-center">
+              <div className="flex-grow border-t border-white/10"></div>
+              <span className="flex-shrink mx-4 text-gray-500 text-xs uppercase tracking-wider">O ingresa con</span>
+              <div className="flex-grow border-t border-white/10"></div>
+            </div>
+
+            <div className="flex justify-center">
+              <GoogleLoginButton onClose={onClose} />
+            </div>
+
+            {/* REGISTER */}
+            <p className="text-center text-sm text-gray-400 mt-5">
+              ¿No tienes cuenta?{" "}
+              <button
+                onClick={onSwitchToRegister}
+                className="text-red-400 hover:underline"
+              >
+                Regístrate
+              </button>
+            </p>
           </div>
         </div>
       </div>
