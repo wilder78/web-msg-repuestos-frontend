@@ -19,6 +19,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailStatus, setEmailStatus] = useState(null);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const emailTimer = useRef(null);
 
@@ -33,7 +34,11 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
       try {
         const res = await fetch(`${API}/users/check-email/${encodeURIComponent(value)}`);
         const data = await res.json();
-        setEmailStatus(data.disponible ? "available" : "taken");
+        if (data.disponible) {
+          setEmailStatus("available");
+        } else {
+          setEmailStatus(data.isActive === false ? "inactive" : "taken");
+        }
       } catch { setEmailStatus(null); }
     }, 500);
   };
@@ -43,6 +48,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
 
     if (!nombre.trim()) { setError("El nombre es obligatorio"); return; }
     if (password !== confirmPassword) { setError("Las contraseñas no coinciden"); return; }
@@ -64,6 +70,17 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al registrar");
+
+      if (data.message && (data.message.includes("activar") || data.message.includes("activación"))) {
+        setSuccessMsg(data.message);
+        setNombre("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        setEmailStatus(null);
+        return;
+      }
+
       if (onRegisterSuccess) onRegisterSuccess(data);
       onClose();
     } catch (err) {
@@ -112,6 +129,9 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             {error && (
               <div className="p-3 bg-red-600/10 border border-red-600/50 rounded-xl text-red-500 text-xs text-center font-bold">{error}</div>
             )}
+            {successMsg && (
+              <div className="p-3 bg-emerald-600/10 border border-emerald-600/50 rounded-xl text-emerald-500 text-xs text-center font-bold">{successMsg}</div>
+            )}
 
             {/* Nombre */}
             <div className="space-y-1.5">
@@ -133,16 +153,18 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   onChange={(e) => { setEmail(e.target.value); checkEmailAvailability(e.target.value); }}
                   placeholder="tu@email.com"
                   className={`w-full pl-12 pr-10 py-3.5 bg-[#16161a] border rounded-xl outline-none focus:ring-4 text-gray-100 placeholder:text-gray-600 shadow-inner transition-all text-sm ${
-                    emailStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : emailStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-white/5 focus:border-red-600/50 focus:ring-red-600/10"
+                    emailStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : emailStatus === "inactive" ? "border-amber-500/50 focus:ring-amber-600/10" : emailStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-white/5 focus:border-red-600/50 focus:ring-red-600/10"
                   }`}
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2">
                   {emailStatus === "checking" && <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-r-transparent" />}
                   {emailStatus === "available" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
                   {emailStatus === "taken" && <XCircle className="h-4 w-4 text-red-500" />}
+                  {emailStatus === "inactive" && <AlertCircle className="h-4 w-4 text-amber-500" />}
                 </span>
               </div>
               {emailStatus === "taken" && <p className="text-[10px] text-red-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Este correo ya está registrado</p>}
+              {emailStatus === "inactive" && <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Registrado pero sin activar. Regístrate para recibir otro enlace.</p>}
               {emailStatus === "available" && <p className="text-[10px] text-emerald-400 mt-1 ml-1">Correo disponible</p>}
             </div>
 
