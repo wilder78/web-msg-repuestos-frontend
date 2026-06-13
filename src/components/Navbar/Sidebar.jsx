@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   Key,
   TrendingUp,
+  History,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../hooks/useAuth";
@@ -59,13 +60,19 @@ const fetchOrdersInProgressCount = async () => {
   for (const url of urls) {
     try {
       const response = await fetch(url, { headers });
-      if (response.status === 401 || response.status === 403) return 0;
-      if (!response.ok) continue;
-
-      const orders = extractList(await response.json().catch(() => ({})));
-      return orders.filter((order) => Number(order.id_estado_pedido ?? order.idEstado) === 1).length;
-    } catch {
-      // Try the next known backend URL.
+      if (response.ok) {
+        const payload = await response.json();
+        const list = extractList(payload);
+        // Filtramos por estado_pedido === 2 (Separación) o 3 (En camino/Tránsito)
+        const inProgress = list.filter(
+          (o) =>
+            Number(o.id_estado_pedido || o.idEstadoPedido) === 2 ||
+            Number(o.id_estado_pedido || o.idEstadoPedido) === 3
+        );
+        return inProgress.length;
+      }
+    } catch (e) {
+      // Intentar el siguiente endpoint
     }
   }
 
@@ -85,16 +92,17 @@ const fetchPendingComprasCount = async () => {
   for (const url of urls) {
     try {
       const response = await fetch(url, { headers });
-      if (response.status === 401 || response.status === 403) return 0;
-      if (!response.ok) continue;
-
-      const payload = await response.json().catch(() => ({}));
-      const list = extractList(payload);
-      return list.filter(
-        (c) => Number(c.id_estado_compra ?? c.idEstadoCompra ?? c.idEstado ?? c.id_estado) === 1
-      ).length;
-    } catch {
-      // Try the next known backend URL.
+      if (response.ok) {
+        const payload = await response.json();
+        const list = extractList(payload);
+        // Filtramos por id_estado === 1 (Pendiente)
+        const pending = list.filter(
+          (c) => Number(c.id_estado || c.idEstado) === 1
+        );
+        return pending.length;
+      }
+    } catch (e) {
+      // Intentar el siguiente endpoint
     }
   }
 
@@ -134,6 +142,11 @@ const navigation = [
       { icon: FileText,
         label: "Ventas",
         href: "/dashboard/sales",
+        requiredPermission: "Ver Reportes",
+      },
+      { icon: History,
+        label: "Historial Compras",
+        href: "/dashboard/historial-compras",
         requiredPermission: "Ver Reportes",
       },
     ],

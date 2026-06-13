@@ -28,6 +28,7 @@ import GestionCompras from "./pages/Compras/GestionCompras";
 import GestionVentas from "./pages/Sales/GestionVentas";
 import CartPage from "./pages/WebCart/CartPage";
 import OrderHistoryPage from "./pages/OrderHistory/OrderHistoryPage";
+import ReporteHistorialCompras from "./pages/Reports/ReporteHistorialCompras";
 
 export default function App() {
   return (
@@ -66,6 +67,18 @@ export default function App() {
       <Route
         path="/sales"
         element={<Navigate to="/dashboard/sales" replace />}
+      />
+
+      {/* Reporte Historial de Compras */}
+      <Route
+        path="/dashboard/historial-compras"
+        element={
+          <PermissionRoute permission="Ver Reportes">
+            <DashboardLayout>
+              <ReporteHistorialCompras />
+            </DashboardLayout>
+          </PermissionRoute>
+        }
       />
 
       {/* Gestión de Pedidos */}

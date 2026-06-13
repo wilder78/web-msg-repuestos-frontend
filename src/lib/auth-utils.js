@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { showForbiddenToast } from "./custom-toast";
 
 export const handleUnauthorized = (url = "") => {
   if (url.includes("/login") || url.includes("/users/login")) {
@@ -19,7 +20,7 @@ export const handleUnauthorized = (url = "") => {
 };
 
 export const handleForbidden = () => {
-  toast.error("No tienes permisos para realizar esta acción");
+  showForbiddenToast();
 };
 
 export const authFetch = async (url, options = {}) => {
