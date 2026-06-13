@@ -1,134 +1,166 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import api from "../../api/axios";
-import HistorialCompras from "../../components/shared/HistorialCompras";
-import { Users, Search, ShoppingBag } from "lucide-react";
+import { ShoppingBag, Search } from "lucide-react";
+import { Card } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import PageHeader from "../../components/shared/PageHeader";
+import { ClientPurchaseHistoryTable } from "./components/ClientPurchaseHistoryTable";
+import ClientPurchaseHistoryDetailsModal from "./components/ClientPurchaseHistoryDetailsModal";
 
-const ReporteHistorialCompras = () => {
+const PAGE_SIZE = 8;
+
+export default function ReporteHistorialCompras() {
   const [customers, setCustomers] = useState([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const response = await api.get("/customers");
-        // Check if response has data.data or similar
-        const data = response.data?.data || response.data || [];
-        setCustomers(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error al obtener lista de clientes:", error);
-      } finally {
-        setLoading(false);
+  // Estados para el modal de detalles
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  const fetchPurchasingCustomers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get("/customers/purchasing-history");
+      if (response.data?.status === "success") {
+        setCustomers(response.data.data || []);
+      } else {
+        throw new Error("No se pudo obtener el reporte de compras.");
       }
-    };
-    fetchCustomers();
+    } catch (err) {
+      console.error("Error al obtener reporte de historial de compras:", err);
+      setError(err.message || "Error al conectar con el servidor.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredCustomers = customers.filter((customer) => {
-    const term = searchTerm.toLowerCase();
-    const doc = (customer.numeroDocumento || customer.numero_documento || "").toLowerCase();
-    const name = (customer.razonSocial || customer.razon_social || "").toLowerCase();
-    return doc.includes(term) || name.includes(term);
-  });
+  useEffect(() => {
+    fetchPurchasingCustomers();
+  }, [fetchPurchasingCustomers]);
+
+  // Filtrado por buscador
+  const filteredCustomers = useMemo(() => {
+    return customers.filter((c) => {
+      const term = searchTerm.toLowerCase();
+      const name = (c.razonSocial || "").toLowerCase();
+      const doc = (c.numeroDocumento || "").toLowerCase();
+      return name.includes(term) || doc.includes(term);
+    });
+  }, [customers, searchTerm]);
+
+  // Paginación
+  const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredCustomers.slice(start, start + PAGE_SIZE);
+  }, [filteredCustomers, currentPage]);
+
+  const showPagination = totalPages > 1;
+
+  const handleViewDetails = (customer) => {
+    setSelectedCustomer(customer);
+    setIsDetailsModalOpen(true);
+  };
 
   return (
-    <div className="container mx-auto p-6 space-y-6" id="reporte-historial-compras-view">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-            <ShoppingBag className="h-6 w-6 text-emerald-600" />
-            Reporte de Historial de Compras
-          </h1>
-          <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">
-            Consulta y exporta el registro de compras, pedidos y detalles de repuestos de cada cliente.
-          </p>
+    <div className="p-8 space-y-8 bg-slate-50 dark:bg-zinc-950 min-h-screen text-slate-900 dark:text-slate-100">
+      <PageHeader
+        icon={ShoppingBag}
+        title="Historial de Compras de Clientes"
+        subtitle="Reporte consolidado de compras y pedidos por cliente"
+      />
+
+      {error && !loading && (
+        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-5 py-3 rounded-lg flex items-center justify-between text-sm font-medium">
+          <span>⚠️ {error}</span>
+          <button
+            onClick={fetchPurchasingCustomers}
+            className="ml-4 text-red-600 underline hover:text-red-800"
+          >
+            Reintentar
+          </button>
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Panel de Selección de Cliente */}
-        <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl shadow-sm h-fit">
-          <h2 className="text-sm font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Users className="h-4.5 w-4.5 text-slate-500" />
-            Seleccionar Cliente
-          </h2>
-
-          <div className="space-y-4">
-            {/* Buscador */}
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar por nombre o doc..."
+      <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-slate-950/40 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-700/60">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+                Clientes que han Comprado
+              </h3>
+              <p className="text-sm text-slate-400 dark:text-zinc-400 font-medium">
+                {loading
+                  ? "Sincronizando..."
+                  : `${filteredCustomers.length} clientes encontrados`}
+              </p>
+            </div>
+            <div className="relative w-full md:w-80">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500"
+                size={18}
+              />
+              <Input
+                placeholder="Buscar por Razón Social o NIT..."
+                className="pl-10 bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-zinc-800 transition-all focus:ring-2 focus:ring-emerald-500/20"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                id="cliente-search-input"
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
               />
             </div>
-
-            {/* Listado de Clientes */}
-            {loading ? (
-              <p className="text-center text-xs text-slate-400 py-6">Cargando clientes...</p>
-            ) : filteredCustomers.length === 0 ? (
-              <p className="text-center text-xs text-slate-400 py-6">No se encontraron clientes.</p>
-            ) : (
-              <div 
-                className="max-h-[350px] overflow-y-auto space-y-1.5 pr-1"
-                id="clientes-list-container"
-              >
-                {filteredCustomers.map((customer) => {
-                  const id = customer.idCliente || customer.id_cliente;
-                  const name = customer.razonSocial || customer.razon_social;
-                  const doc = customer.numeroDocumento || customer.numero_documento;
-                  const isSelected = String(selectedCustomerId) === String(id);
-
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setSelectedCustomerId(id)}
-                      className={`w-full text-left p-3 rounded-xl border transition-all text-xs flex flex-col gap-0.5 ${
-                        isSelected
-                          ? "bg-emerald-50/75 border-emerald-300 dark:bg-emerald-950/20 dark:border-emerald-800 text-emerald-900 dark:text-emerald-400 shadow-sm"
-                          : "border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-300"
-                      }`}
-                      id={`btn-select-cliente-${id}`}
-                    >
-                      <span className="font-bold truncate text-sm">
-                        {name}
-                      </span>
-                      <span className={`font-medium ${isSelected ? 'text-emerald-700 dark:text-emerald-500' : 'text-slate-400'}`}>
-                        Documento: {doc}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Panel de Visualización del Historial */}
-        <div className="lg:col-span-2">
-          {selectedCustomerId ? (
-            <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
-              <HistorialCompras idCliente={selectedCustomerId} />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl shadow-sm text-center h-[300px]" id="no-client-selected">
-              <Users className="h-12 w-12 text-slate-300 mb-3" />
-              <h3 className="font-bold text-slate-700 dark:text-zinc-300 text-lg">Historial de Compras</h3>
-              <p className="text-slate-400 dark:text-zinc-500 text-sm max-w-sm mt-1 mx-auto">
-                Selecciona un cliente de la lista de la izquierda para ver su historial detallado de pedidos y compras.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+        <ClientPurchaseHistoryTable
+          customers={paginated}
+          loading={loading}
+          onViewDetails={handleViewDetails}
+        />
+
+        {showPagination && (
+          <div className="p-4 bg-slate-50/50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-700/60 flex justify-center items-center gap-4 text-sm font-bold text-slate-600 dark:text-zinc-400">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="disabled:opacity-50 disabled:cursor-not-allowed hover:text-slate-900 dark:hover:text-white"
+            >
+              Anterior
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1.5 rounded-lg border shadow-sm ${
+                  page === currentPage
+                    ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50"
+                    : "bg-white dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-700 hover:text-slate-800 dark:hover:text-white"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="disabled:opacity-50 disabled:cursor-not-allowed hover:text-slate-900 dark:hover:text-white"
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
+      </Card>
+
+      <ClientPurchaseHistoryDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        customer={selectedCustomer}
+      />
     </div>
   );
-};
-
-export default ReporteHistorialCompras;
+}
