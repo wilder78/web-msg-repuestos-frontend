@@ -82,7 +82,11 @@ export function CustomerForm({
   }, [formData, onValidityChange]);
 
   const handleChange = (field, value) => {
-    onChange({ ...formData, [field]: value });
+    let sanitizedValue = value;
+    if (field === "numeroDocumento" || field === "telefono") {
+      sanitizedValue = value.replace(/[^0-9]/g, "");
+    }
+    onChange({ ...formData, [field]: sanitizedValue });
   };
   const identityReadOnly = isEditing && !canEditIdentity;
 

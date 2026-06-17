@@ -148,6 +148,7 @@ export default function GestionProductosWeb() {
       price: `S/ ${Number(price).toFixed(2)}`,
       image: product.imagenUrl || product.imagen_url || null,
       marca: product.marca || "Genérico",
+      stock: Number(product.stockBuenEstado ?? product.stock_buen_estado ?? product.stock ?? 0),
     };
     addToCart(cartProduct);
 

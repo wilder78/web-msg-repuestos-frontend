@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "sonner";
 
 const CartContext = createContext();
 
@@ -25,10 +26,16 @@ export function CartProvider({ children }) {
   const addToCart = (product) => {
     setCart((prevCart) => {
       const existingProduct = prevCart.find((item) => item.id === product.id);
+      const stockLimit = Number(product.stock ?? product.stockBuenEstado ?? product.stock_buen_estado ?? 9999);
       if (existingProduct) {
+        const nextQuantity = existingProduct.quantity + 1;
+        if (nextQuantity > stockLimit) {
+          toast.error(`Lo sentimos, no puedes agregar más unidades. El stock disponible es ${stockLimit}.`);
+          return prevCart;
+        }
         return prevCart.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: nextQuantity }
             : item
         );
       }
@@ -43,9 +50,17 @@ export function CartProvider({ children }) {
   const updateQuantity = (productId, newQuantity) => {
     const safeQuantity = normalizeQuantity(newQuantity);
     setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.id === productId ? { ...item, quantity: safeQuantity } : item
-      )
+      prevCart.map((item) => {
+        if (item.id === productId) {
+          const stockLimit = Number(item.stock ?? item.stockBuenEstado ?? item.stock_buen_estado ?? 9999);
+          if (safeQuantity > stockLimit) {
+            toast.error(`Lo sentimos, no puedes solicitar más de ${stockLimit} unidades. Stock insuficiente.`);
+            return { ...item, quantity: stockLimit };
+          }
+          return { ...item, quantity: safeQuantity };
+        }
+        return item;
+      })
     );
   };
 

@@ -65,6 +65,7 @@ const ProductCard = ({ product, showNew = false }) => {
     name,
     price,
     image,
+    stock: Number(product.stock || product.stockBuenEstado || product.stock_buen_estado || 0),
   };
 
   return (

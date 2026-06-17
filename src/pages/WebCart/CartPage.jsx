@@ -153,9 +153,15 @@ const CartItem = ({ item }) => {
 
   const commitQuantity = (value = quantityValue) => {
     const parsedQuantity = Number.parseInt(value, 10);
-    const nextQuantity = Number.isInteger(parsedQuantity) && parsedQuantity > 0
+    let nextQuantity = Number.isInteger(parsedQuantity) && parsedQuantity > 0
       ? parsedQuantity
       : 1;
+
+    const stockLimit = Number(item.stock ?? item.stockBuenEstado ?? item.stock_buen_estado ?? 9999);
+    if (nextQuantity > stockLimit) {
+      toast.error(`Lo sentimos, no puedes solicitar más de ${stockLimit} unidades. Stock insuficiente.`);
+      nextQuantity = stockLimit;
+    }
 
     setQuantityValue(String(nextQuantity));
     updateQuantity(item.id, nextQuantity);
@@ -181,7 +187,12 @@ const CartItem = ({ item }) => {
   };
 
   const increaseQuantity = () => {
+    const stockLimit = Number(item.stock ?? item.stockBuenEstado ?? item.stock_buen_estado ?? 9999);
     const nextQuantity = item.quantity + 1;
+    if (nextQuantity > stockLimit) {
+      toast.error(`Lo sentimos, no puedes solicitar más de ${stockLimit} unidades. Stock insuficiente.`);
+      return;
+    }
     setQuantityValue(String(nextQuantity));
     updateQuantity(item.id, nextQuantity);
   };
@@ -305,9 +316,13 @@ const CustomerRegistrationModal = ({
   const isSubmitDisabled = loading || documentValidation.loading;
 
   const updateField = (field, value) => {
+    let sanitizedValue = value;
+    if (field === "numero_documento" || field === "telefono") {
+      sanitizedValue = value.replace(/[^0-9]/g, "");
+    }
     onChange({
       ...formData,
-      [field]: value,
+      [field]: sanitizedValue,
       ...(field === "id_departamento" ? { municipio_id: "" } : {}),
     });
   };
@@ -883,6 +898,20 @@ export default function CartPage() {
       const existingCustomer = await findCustomerByDocument(documentTypeId, documentNumber);
       
       if (existingCustomer) {
+        const currentUserEmail = getStoredUserEmail();
+        const existingEmail = (existingCustomer.email || existingCustomer.correo || existingCustomer.emailCliente || existingCustomer.email_cliente || "").trim();
+
+        if (existingEmail && currentUserEmail && existingEmail.toLowerCase() !== currentUserEmail.toLowerCase()) {
+          setDocumentValidation({
+            loading: false,
+            exists: true,
+            error: "El número de documento ingresado ya está registrado con otra cuenta de correo.",
+            key: validationKey,
+            customerData: null,
+          });
+          return;
+        }
+
         const municipioObj = existingCustomer.municipio;
         const deptId = existingCustomer.idDepartamento ?? existingCustomer.id_departamento ?? municipioObj?.departamento?.id ?? municipioObj?.departmentId;
         const muniId = existingCustomer.idMunicipio ?? existingCustomer.id_municipio ?? existingCustomer.municipioId ?? existingCustomer.municipio_id ?? municipioObj?.id;
@@ -1133,6 +1162,11 @@ export default function CartPage() {
       return;
     }
 
+    if (documentValidation.error) {
+      setCustomerFormError(documentValidation.error);
+      return;
+    }
+
     setCheckoutLoading(true);
     setCustomerFormError("");
     setCheckoutError("");
@@ -1141,6 +1175,15 @@ export default function CartPage() {
         customerForm.id_tipo_documento,
         customerForm.numero_documento
       );
+
+      if (existingCustomer) {
+        const currentUserEmail = getStoredUserEmail();
+        const existingEmail = (existingCustomer.email || existingCustomer.correo || existingCustomer.emailCliente || existingCustomer.email_cliente || "").trim();
+
+        if (existingEmail && currentUserEmail && existingEmail.toLowerCase() !== currentUserEmail.toLowerCase()) {
+          throw new Error("El número de documento ingresado ya está registrado con otra cuenta de correo.");
+        }
+      }
 
       const customerPayload = {
         id_tipo_documento: parseInt(customerForm.id_tipo_documento, 10),

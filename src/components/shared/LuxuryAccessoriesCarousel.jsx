@@ -106,6 +106,7 @@ export default function LuxuryAccessoriesCarousel({ products = [] }) {
             name: cleanName,
             price: formattedPrice,
             image: p.imagen_url || "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=500&auto=format&fit=crop&q=60",
+            stock: Number(p.stock ?? 0),
           };
 
           const isLowStock = p.stock > 0 && p.stock <= 5;

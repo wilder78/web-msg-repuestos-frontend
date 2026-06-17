@@ -372,9 +372,13 @@ export default function AccountSettingsModal({ isOpen, onClose }) {
 
   const updateField = (field, value) => {
     setError("");
+    let sanitizedValue = value;
+    if (field === "numero_documento" || field === "telefono") {
+      sanitizedValue = value.replace(/[^0-9]/g, "");
+    }
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: sanitizedValue,
       ...(field === "id_departamento" ? { municipio_id: "" } : {}),
     }));
   };
