@@ -52,6 +52,7 @@ const CustomerEditModal = ({
   const [formData, setFormData] = useState({});
   const [zonas, setZonas] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [isFormValid, setIsFormValid] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -72,6 +73,13 @@ const CustomerEditModal = ({
       .then((res) => (res.ok ? res.json() : []))
       .then((data) =>
         setDepartments(Array.isArray(data) ? data : data.data || []),
+      )
+      .catch(console.error);
+
+    authFetch("/api/tipo-documento")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) =>
+        setDocumentTypes(Array.isArray(data) ? data : data.data || []),
       )
       .catch(console.error);
   }, [isOpen, authFetch]);
@@ -255,6 +263,7 @@ const CustomerEditModal = ({
         departments={departments}
         authFetch={authFetch}
         canEditIdentity={canEditIdentity}
+        documentTypes={documentTypes}
       />
     </BaseFormModal>
   );

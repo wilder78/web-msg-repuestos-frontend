@@ -713,7 +713,7 @@ const GestionPedidos = () => {
                 title="Gestión de Pedidos"
                 subtitle="Panel administrativo de pedidos."
                 buttonText="Registrar Pedido"
-                onButtonClick={() => openWindow("order-create", { title: "Registrar Nuevo Pedido", type: "order-create", size: { width: 850, height: 600 } })}
+                onButtonClick={() => openWindow("order-create", { title: "Registrar Nuevo Pedido", type: "order-create", size: { width: 1120, height: 600 } })}
                 createPermission="Crear Venta"
             />
 
@@ -778,7 +778,7 @@ const GestionPedidos = () => {
                         getAvatarColor={getAvatarColor}
                         getInitials={getInitials}
                         onView={(p) => toggleModal("view", true, p)}
-                        onEdit={(p) => openWindow(`order-edit-${p.idPedido || p.id_pedido}`, { title: `Editar Pedido #${p.idPedido || p.id_pedido}`, type: "order-edit", data: p, size: { width: 850, height: 600 } })}
+                        onEdit={(p) => openWindow(`order-edit-${p.idPedido || p.id_pedido}`, { title: `Editar Pedido #${p.idPedido || p.id_pedido}`, type: "order-edit", data: p, size: { width: 1120, height: 600 } })}
                         onStatusChange={handlePedidoStatusChange}
                         onAbonos={(p) => toggleModal("abonos", true, p)}
                     />

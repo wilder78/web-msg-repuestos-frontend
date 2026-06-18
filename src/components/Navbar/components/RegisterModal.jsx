@@ -107,25 +107,25 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
       `}</style>
 
-      <div className="bg-[#0f0f12]/95 w-full max-w-md rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.7)] overflow-hidden relative animate-slide-up border border-white/10 max-h-[90vh] flex flex-col">
-        <div className="h-1.5 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 shrink-0"></div>
+      <div className="bg-[#FFFFFF] w-full max-w-md rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.15)] overflow-hidden relative animate-slide-up border border-[#DEE2E6] max-h-[90vh] flex flex-col">
+        <div className="h-1 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 shrink-0"></div>
 
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all z-20">
+        <button onClick={onClose} className="absolute top-4 right-4 p-1 text-[#343A40] hover:bg-black/5 rounded-full transition-all z-20">
           <X size={20} />
         </button>
 
         <div className="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
           <header className="mb-8 text-center">
             <div className="flex justify-center mb-4">
-              <div className="relative p-1 rounded-xl bg-gradient-to-b from-white/10 to-transparent">
-                <img src="/public/imagen/logocuadrado.png" alt="Logo MSG" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]" />
+              <div className="relative p-1 rounded-xl bg-gray-50 border border-gray-100">
+                <img src="/public/imagen/logocuadrado.png" alt="Logo MSG" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(239,68,68,0.2)]" />
               </div>
             </div>
-            <h2 className="text-white text-xl font-bold tracking-tight">Crea tu cuenta</h2>
-            <p className="text-gray-400 text-sm mt-1 px-2">Únete a la comunidad líder en repuestos y accesorios</p>
+            <h2 className="text-[#343A40] text-xl font-bold tracking-tight">Crea tu cuenta</h2>
+            <p className="text-[#6C757D] text-sm mt-1 px-2">Únete a la comunidad líder en repuestos y accesorios</p>
           </header>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-4 bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6]" onSubmit={handleSubmit}>
             {error && (
               <div className="p-3 bg-red-600/10 border border-red-600/50 rounded-xl text-red-500 text-xs text-center font-bold">{error}</div>
             )}
@@ -135,25 +135,25 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
             {/* Nombre */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nombre completo</label>
+              <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Nombre completo</label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-500 transition-colors" size={18} />
-                <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Juan Pérez" className="w-full pl-12 pr-4 py-3.5 bg-[#16161a] border border-white/5 rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-gray-100 placeholder:text-gray-600 shadow-inner transition-all text-sm" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Juan Pérez" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
               </div>
             </div>
 
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Correo electrónico</label>
+              <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Correo electrónico</label>
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-500 transition-colors" size={18} />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); checkEmailAvailability(e.target.value); }}
                   placeholder="tu@email.com"
-                  className={`w-full pl-12 pr-10 py-3.5 bg-[#16161a] border rounded-xl outline-none focus:ring-4 text-gray-100 placeholder:text-gray-600 shadow-inner transition-all text-sm ${
-                    emailStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : emailStatus === "inactive" ? "border-amber-500/50 focus:ring-amber-600/10" : emailStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-white/5 focus:border-red-600/50 focus:ring-red-600/10"
+                  className={`w-full pl-12 pr-10 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
+                    emailStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : emailStatus === "inactive" ? "border-amber-500/50 focus:ring-amber-600/10" : emailStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
                   }`}
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -170,19 +170,19 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
             {/* Contraseña */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contraseña</label>
+              <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Contraseña</label>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-500 transition-colors" size={18} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full pl-12 pr-12 py-3.5 bg-[#16161a] border rounded-xl outline-none focus:ring-4 text-gray-100 placeholder:text-gray-600 shadow-inner transition-all text-sm ${
-                    password && !passwordValid ? "border-amber-500/50 focus:ring-amber-600/10" : passwordValid ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-white/5 focus:border-red-600/50 focus:ring-red-600/10"
+                  className={`w-full pl-12 pr-12 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
+                    password && !passwordValid ? "border-amber-500/50 focus:ring-amber-600/10" : passwordValid ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
                   }`}
                 />
-                <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500 transition-colors" tabIndex={-1}>
+                <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500 transition-colors" tabIndex={-1}>
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
@@ -190,19 +190,19 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
             {/* Confirmar contraseña */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Confirmar contraseña</label>
+              <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Confirmar contraseña</label>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-500 transition-colors" size={18} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full pl-12 pr-12 py-3.5 bg-[#16161a] border rounded-xl outline-none focus:ring-4 text-gray-100 placeholder:text-gray-600 shadow-inner transition-all text-sm ${
-                    confirmPassword && password !== confirmPassword ? "border-red-600/50 focus:ring-red-600/10" : "border-white/5 focus:border-red-600/50 focus:ring-red-600/10"
+                  className={`w-full pl-12 pr-12 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
+                    confirmPassword && password !== confirmPassword ? "border-red-600/50 focus:ring-red-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
                   }`}
                 />
-                <button type="button" onClick={() => setShowConfirmPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500 transition-colors" tabIndex={-1}>
+                <button type="button" onClick={() => setShowConfirmPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500 transition-colors" tabIndex={-1}>
                   {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
@@ -211,14 +211,14 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
             {/* Indicador de fortaleza */}
             {password && (
-              <div className="bg-[#16161a] rounded-xl border border-white/5 p-3 space-y-1.5">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Requisitos de seguridad</p>
+              <div className="bg-[#FFFFFF] rounded-xl border border-[#DEE2E6] p-3 space-y-1.5">
+                <p className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest">Requisitos de seguridad</p>
                 {PASSWORD_RULES.map((rule, i) => {
                   const ok = rule.re.test(password);
                   return (
                     <div key={i} className="flex items-center gap-2">
                       {ok ? <CheckCircle2 size={10} className="text-emerald-500 shrink-0" /> : <XCircle size={10} className="text-amber-500 shrink-0" />}
-                      <span className={`text-[10px] ${ok ? "text-emerald-400" : "text-gray-500"}`}>{rule.label}</span>
+                      <span className={`text-[10px] ${ok ? "text-emerald-500" : "text-[#6C757D]"}`}>{rule.label}</span>
                     </div>
                   );
                 })}
@@ -227,10 +227,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
             {/* Términos */}
             <div className="flex items-start gap-3 px-1 py-2">
-              <input type="checkbox" required className="mt-1 w-4 h-4 rounded border-white/10 bg-gray-800 text-red-600 focus:ring-red-500/50 cursor-pointer" />
-              <p className="text-[10px] text-gray-500 leading-tight">
-                Acepto los <span className="text-red-500 cursor-pointer hover:text-red-400 transition-colors font-bold">Términos de servicio</span> y la{" "}
-                <span className="text-red-500 cursor-pointer hover:text-red-400 transition-colors font-bold">Política de privacidad</span>.
+              <input type="checkbox" required className="mt-1 w-4 h-4 rounded border-[#DEE2E6] bg-[#FFFFFF] text-red-600 focus:ring-red-500/50 cursor-pointer" />
+              <p className="text-[10px] text-[#343A40] leading-tight">
+                Acepto los <span className="text-red-600 cursor-pointer hover:text-red-500 transition-colors font-bold">Términos de servicio</span> y la{" "}
+                <span className="text-red-600 cursor-pointer hover:text-red-500 transition-colors font-bold">Política de privacidad</span>.
               </p>
             </div>
 
@@ -238,8 +238,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             <button
               type="submit"
               disabled={submitting || emailStatus === "taken"}
-              className={`w-full rounded-xl font-black uppercase tracking-widest py-4 flex items-center justify-center gap-3 transition-all active:scale-95 ${
-                submitting ? "bg-gray-700 text-gray-400 cursor-not-allowed" : "btn-nitro bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-[0_10px_20px_rgba(220,38,38,0.2)]"
+              className={`w-full rounded-xl font-black uppercase tracking-widest py-4 flex items-center justify-center gap-3 transition-all active:scale-95 cursor-pointer ${
+                submitting ? "bg-gray-400 text-gray-200 cursor-not-allowed" : "btn-nitro bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white shadow-[0_10px_20px_rgba(220,38,38,0.2)]"
               }`}
             >
               {submitting ? (
@@ -250,10 +250,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             </button>
           </form>
 
-          <div className="mt-8 text-center pt-6 border-t border-white/5">
-            <p className="text-gray-500 text-sm">
+          <div className="mt-8 text-center pt-6 border-t border-[#DEE2E6]">
+            <p className="text-[#343A40] text-sm">
               ¿Ya tienes una cuenta?{" "}
-              <button onClick={onSwitchToLogin} className="text-white hover:text-red-500 font-bold transition-all underline-offset-4 hover:underline">
+              <button onClick={onSwitchToLogin} className="text-red-600 hover:text-red-500 font-bold transition-all underline-offset-4 hover:underline">
                 Inicia sesión
               </button>
             </p>

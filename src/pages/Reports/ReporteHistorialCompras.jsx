@@ -70,7 +70,7 @@ export default function ReporteHistorialCompras() {
     <div className="p-8 space-y-8 bg-slate-50 dark:bg-zinc-950 min-h-screen text-slate-900 dark:text-slate-100">
       <PageHeader
         icon={ShoppingBag}
-        title="Historial de Compras de Clientes"
+        title="Historial de Ventas"
         subtitle="Reporte consolidado de compras y pedidos por cliente"
       />
 

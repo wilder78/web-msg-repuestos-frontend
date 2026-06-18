@@ -20,9 +20,16 @@ export function CustomerForm({
   departments = [],
   authFetch,
   canEditIdentity = false,
+  documentTypes = [],
 }) {
   const [municipalities, setMunicipalities] = useState([]);
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false);
+
+  const displayDocs = documentTypes.length > 0 ? documentTypes : [
+    { idTipoDocumento: 1, sigla: "C.C.", descripcion: "Cédula de Ciudadanía" },
+    { idTipoDocumento: 2, sigla: "NIT", descripcion: "Número de Identificación Tributaria" },
+    { idTipoDocumento: 3, sigla: "C.E.", descripcion: "Cédula de Extranjería" },
+  ];
   // ✅ Guardamos el idMunicipio pendiente mientras la lista no ha cargado aún
   const pendingMunicipio = useRef(null);
 
@@ -118,11 +125,18 @@ export function CustomerForm({
             {identityReadOnly ? (
               <Input
                 value={
-                  formData.idTipoDocumento === "1"
+                  displayDocs.find(
+                    (d) =>
+                      (d.idTipoDocumento || d.id || d.id_tipo_documento)?.toString() ===
+                      formData.idTipoDocumento?.toString()
+                  )?.sigla ||
+                  (formData.idTipoDocumento === "1"
                     ? "C.C."
                     : formData.idTipoDocumento === "2"
                       ? "NIT"
-                      : "C.E."
+                      : formData.idTipoDocumento === "3"
+                        ? "C.E."
+                        : formData.idTipoDocumento || "")
                 }
                 readOnly
                 disabled
@@ -137,13 +151,14 @@ export function CustomerForm({
                   <SelectValue placeholder="Seleccionar..." />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-slate-200 dark:border-zinc-800 max-h-60 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
-                  <SelectItem value="1">C.C. — Cédula de Ciudadanía</SelectItem>
-                  <SelectItem value="2">
-                    NIT — Número de Identificación Tributaria
-                  </SelectItem>
-                  <SelectItem value="3">
-                    C.E. — Cédula de Extranjería
-                  </SelectItem>
+                  {displayDocs.map((d) => {
+                    const val = (d.idTipoDocumento || d.id || d.id_tipo_documento).toString();
+                    return (
+                      <SelectItem key={val} value={val}>
+                        {d.sigla} — {d.descripcion}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}

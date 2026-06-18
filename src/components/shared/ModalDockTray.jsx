@@ -145,6 +145,7 @@ const WindowContent = ({ win, onClose }) => {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [usedUserIds, setUsedUserIds] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [roles, setRoles] = useState([]);
   const [salesOrders, setSalesOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -796,17 +797,15 @@ const WindowContent = ({ win, onClose }) => {
       win.type === "abono-create"
     ) {
       setInitLoaded(true);
-
-
-
     } else {
-
       Promise.all([
         authFetch("/api/zonas").then(r => r.ok ? r.json() : []),
-        authFetch("/api/departments").then(r => r.ok ? r.json() : [])
-      ]).then(([zonasData, deptsData]) => {
+        authFetch("/api/departments").then(r => r.ok ? r.json() : []),
+        authFetch("/api/tipo-documento").then(r => r.ok ? r.json() : [])
+      ]).then(([zonasData, deptsData, docsData]) => {
         setZonas(Array.isArray(zonasData) ? zonasData : zonasData.data || []);
         setDepartments(Array.isArray(deptsData) ? deptsData : deptsData.data || []);
+        setDocumentTypes(Array.isArray(docsData) ? docsData : docsData.data || []);
         setInitLoaded(true);
       }).catch(err => {
         console.error("Error loading form dependency data:", err);
@@ -1436,6 +1435,7 @@ const WindowContent = ({ win, onClose }) => {
             departments={departments}
             authFetch={authFetch}
             isEditing={win.type === "customer-edit"}
+            documentTypes={documentTypes}
           />
         ) : win.type.startsWith("user-") ? (
           <UserForm

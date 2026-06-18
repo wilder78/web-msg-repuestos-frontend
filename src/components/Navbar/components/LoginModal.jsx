@@ -42,14 +42,14 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
         <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 rounded-3xl blur opacity-20"></div>
 
         {/* CARD */}
-        <div className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="relative bg-[#FFFFFF] border border-[#DEE2E6] rounded-3xl shadow-2xl overflow-hidden">
           {/* Barra superior */}
-          <div className="h-1.5 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500"></div>
+          <div className="h-1 bg-gradient-to-r from-red-600 to-orange-500"></div>
 
           {/* Botón cerrar */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-red-400 transition"
+            className="absolute top-4 right-4 text-[#343A40] hover:bg-black/5 p-1 rounded-full transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -63,19 +63,19 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
                 className="w-20 h-20 mx-auto mb-4 rounded-xl border border-red-500/40 shadow-md"
               />
 
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-[#343A40]">
                 Bienvenido a tu mundo biker
               </h2>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-[#6C757D] text-sm mt-1">
                 Encuentra los mejores repuestos para tu moto
               </p>
             </div>
 
             {/* FORM */}
-            <form onSubmit={actions.handleSubmit} className="space-y-5">
+            <form onSubmit={actions.handleSubmit} className="space-y-5 bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6]">
               {/* EMAIL */}
               <div>
-                <label className="text-sm text-gray-300">
+                <label className="text-sm text-[#343A40] font-medium">
                   Correo electrónico
                 </label>
                 <div
@@ -85,14 +85,14 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
                 >
                   <Mail
                     className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-                      state.emailFocused ? "text-red-500" : "text-gray-500"
+                      state.emailFocused ? "text-red-500" : "text-[#6C757D]"
                     }`}
                   />
                   <input
                     type="email"
                     value={state.email}
                     placeholder="ejemplo@correo.com"
-                    className="w-full pl-10 pr-4 py-3 bg-black/40 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
+                    className="w-full pl-10 pr-4 py-3 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl text-[#343A40] placeholder-[#6C757D] focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
                     onChange={(e) => actions.setEmail(e.target.value)}
                     onFocus={() => actions.setEmailFocused(true)}
                     onBlur={() => actions.setEmailFocused(false)}
@@ -104,11 +104,11 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
               {/* PASSWORD */}
               <div>
                 <div className="flex justify-between text-sm">
-                  <label className="text-gray-300">Contraseña</label>
+                  <label className="text-[#343A40] font-medium">Contraseña</label>
                   <button
                     type="button"
                     onClick={onSwitchToForgotPassword}
-                    className="text-sm text-red-400 hover:underline cursor-pointer"
+                    className="text-sm text-red-600 hover:text-red-500 hover:underline cursor-pointer"
                   >
                     ¿Olvidaste?
                   </button>
@@ -121,14 +121,14 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
                 >
                   <Lock
                     className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-                      state.passwordFocused ? "text-red-500" : "text-gray-500"
+                      state.passwordFocused ? "text-red-500" : "text-[#6C757D]"
                     }`}
                   />
                   <input
                     type={state.showPassword ? "text" : "password"}
                     value={state.password}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-3 bg-black/40 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
+                    className="w-full pl-10 pr-10 py-3 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl text-[#343A40] placeholder-[#6C757D] focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
                     onChange={(e) => actions.setPassword(e.target.value)}
                     onFocus={() => actions.setPasswordFocused(true)}
                     onBlur={() => actions.setPasswordFocused(false)}
@@ -137,16 +137,16 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
                   <button
                     type="button"
                     onClick={() => actions.setShowPassword(!state.showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-400"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500"
                   >
-                    {state.showPassword ? <EyeOff /> : <Eye />}
+                    {state.showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
               {/* CHECK */}
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 text-gray-400">
+                <label className="flex items-center gap-2 text-[#343A40] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={state.rememberMe}
@@ -155,7 +155,7 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
                   />
                   Recordarme
                 </label>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-[#6C757D]">
                   🔒 Conexión segura
                 </span>
               </div>
@@ -163,8 +163,8 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
               {/* ERROR */}
               {state.error && (
                 <div className="bg-red-500/10 border border-red-500/40 p-3 rounded-xl flex gap-2">
-                  <AlertCircle className="text-red-400" />
-                  <p className="text-red-300 text-sm">{state.error}</p>
+                  <AlertCircle className="text-red-500 shrink-0" />
+                  <p className="text-red-600 text-sm">{state.error}</p>
                 </div>
               )}
 
@@ -172,7 +172,7 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
               <button
                 type="submit"
                 disabled={state.loading}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-600 to-orange-500 hover:scale-[1.02] active:scale-[0.97] transition shadow-lg shadow-red-500/30"
+                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-600 to-orange-500 hover:scale-[1.02] active:scale-[0.97] transition shadow-lg shadow-red-500/30 cursor-pointer"
               >
                 <div className="flex justify-center items-center gap-2">
                   {state.loading ? (
@@ -185,17 +185,14 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onSwitchToForg
                   )}
                 </div>
               </button>
-
             </form>
 
-
-
             {/* REGISTER */}
-            <p className="text-center text-sm text-gray-400 mt-5">
+            <p className="text-center text-sm text-[#343A40] mt-5">
               ¿No tienes cuenta?{" "}
               <button
                 onClick={onSwitchToRegister}
-                className="text-red-400 hover:underline"
+                className="text-red-600 hover:text-red-500 font-semibold hover:underline"
               >
                 Regístrate
               </button>

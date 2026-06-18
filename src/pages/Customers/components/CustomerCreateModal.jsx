@@ -26,6 +26,7 @@ export function CustomerCreateModal({ isOpen, onClose, onSuccess, authFetch }) {
 
   const [zonas, setZonas] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -55,6 +56,13 @@ export function CustomerCreateModal({ isOpen, onClose, onSuccess, authFetch }) {
         .then((res) => (res.ok ? res.json() : []))
         .then((data) =>
           setDepartments(Array.isArray(data) ? data : data.data || []),
+        )
+        .catch(console.error);
+
+      authFetch("/api/tipo-documento")
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) =>
+          setDocumentTypes(Array.isArray(data) ? data : data.data || []),
         )
         .catch(console.error);
     }
@@ -133,6 +141,7 @@ export function CustomerCreateModal({ isOpen, onClose, onSuccess, authFetch }) {
         zonas={zonas}
         departments={departments}
         authFetch={authFetch}
+        documentTypes={documentTypes}
       />
     </BaseFormModal>
   );

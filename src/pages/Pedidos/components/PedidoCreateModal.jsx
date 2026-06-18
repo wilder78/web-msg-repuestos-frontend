@@ -652,10 +652,10 @@ export default function PedidoCreateModal({
              </Label>
              
              {/* Agregar Producto Builder */}
-             <div className="flex items-end gap-3 mb-4 p-4 bg-slate-50 dark:bg-zinc-950/40 border border-slate-100 dark:border-zinc-800 rounded-xl">
-                <div className="flex-1 flex flex-col gap-1.5">
+             <div className="flex flex-wrap items-end gap-3 mb-4 p-4 bg-slate-50 dark:bg-zinc-950/40 border border-slate-100 dark:border-zinc-800 rounded-xl">
+                <div className="flex-1 min-w-[200px] flex flex-col gap-1.5">
                    <Label className="text-xs font-semibold text-slate-600 dark:text-zinc-400 flex items-center justify-between">
-                     <span>Catálogo de Productos</span>
+                     <span>Producto (Nombre)</span>
                      {currentDetail.id_producto && (
                        <span
                          className={`font-semibold text-[10px] px-1.5 py-0.5 rounded-md transition-colors ${
@@ -673,27 +673,19 @@ export default function PedidoCreateModal({
                       onValueChange={onProductSelect}
                    >
                      <SelectTrigger className="h-9 bg-white dark:bg-zinc-800 text-xs border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
-                       <SelectValue placeholder={productsLoading ? "Cargando..." : "Buscar producto..."} />
+                       <SelectValue placeholder={productsLoading ? "Cargando..." : "Seleccionar por nombre..."} />
                      </SelectTrigger>
                      <SelectContent>
                         {products.map(p => {
                            const cleanName = p.nombre?.replace(/\s*\(.*?\)/g, '')?.replace(/\s*\[.*?\]/g, '')?.trim() || "Producto";
-                           const ref = p.referencia || p.codigo;
                            const stock = p.stockBuenEstado ?? p.stock_buen_estado ?? 0;
                            return (
                              <SelectItem key={p.idProducto || p.id_producto} value={(p.idProducto || p.id_producto).toString()}>
                                 <div className="flex items-center justify-between w-full gap-4">
                                    <span className="font-medium truncate text-slate-800">{cleanName}</span>
-                                   <div className="flex items-center gap-1.5 shrink-0">
-                                      {ref && (
-                                         <span className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 text-[10px] px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
-                                            Ref: {ref}
-                                         </span>
-                                      )}
-                                      <span className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/50">
-                                         Disp: {stock}
-                                      </span>
-                                   </div>
+                                   <span className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/50 shrink-0">
+                                      Disp: {stock}
+                                   </span>
                                 </div>
                              </SelectItem>
                            );
@@ -701,6 +693,34 @@ export default function PedidoCreateModal({
                      </SelectContent>
                    </Select>
                 </div>
+
+                <div className="w-full md:w-48 flex flex-col gap-1.5">
+                    <Label className="text-xs font-semibold text-slate-600 dark:text-zinc-400">Referencia</Label>
+                    <Select 
+                       value={currentDetail.id_producto?.toString()} 
+                       onValueChange={onProductSelect}
+                    >
+                      <SelectTrigger className="h-9 bg-white dark:bg-zinc-800 text-xs border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
+                        <SelectValue placeholder={productsLoading ? "Cargando..." : "Seleccionar por referencia..."} />
+                      </SelectTrigger>
+                      <SelectContent>
+                         {products.map(p => {
+                            const ref = p.referencia || p.codigo || "Sin Ref";
+                            const stock = p.stockBuenEstado ?? p.stock_buen_estado ?? 0;
+                            return (
+                              <SelectItem key={p.idProducto || p.id_producto} value={(p.idProducto || p.id_producto).toString()}>
+                                 <div className="flex items-center justify-between w-full gap-4">
+                                    <span className="font-medium truncate text-slate-800">{ref}</span>
+                                    <span className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/50 shrink-0">
+                                       Disp: {stock}
+                                    </span>
+                                 </div>
+                              </SelectItem>
+                            );
+                         })}
+                      </SelectContent>
+                    </Select>
+                 </div>
                 
                 <div className="w-20 flex flex-col gap-1.5 relative">
                    <Label className="text-xs font-semibold text-slate-600 dark:text-zinc-400">Cant.</Label>

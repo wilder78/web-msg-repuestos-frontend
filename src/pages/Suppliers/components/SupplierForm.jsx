@@ -28,6 +28,7 @@ export function SupplierForm({
 }) {
   const [departments, setDepartments] = useState([]);
   const [municipalities, setMunicipalities] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState(
     formData.id_departamento ? formData.id_departamento.toString() : "",
@@ -39,11 +40,24 @@ export function SupplierForm({
     return { Authorization: `Bearer ${token}` };
   };
 
+  const displayDocs = documentTypes.length > 0 ? documentTypes : [
+    { idTipoDocumento: 1, sigla: "C.C.", descripcion: "Cédula de Ciudadanía" },
+    { idTipoDocumento: 2, sigla: "NIT", descripcion: "NIT" },
+    { idTipoDocumento: 3, sigla: "C.E.", descripcion: "Cédula de Extranjería" },
+  ];
+
   useEffect(() => {
     fetch("/api/departments", { headers: getHeaders() })
       .then((res) => (res.ok ? res.json() : []))
       .then((data) =>
         setDepartments(Array.isArray(data) ? data : data.data || []),
+      )
+      .catch(console.error);
+
+    fetch("/api/tipo-documento", { headers: getHeaders() })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) =>
+        setDocumentTypes(Array.isArray(data) ? data : data.data || []),
       )
       .catch(console.error);
   }, []);
@@ -130,9 +144,14 @@ export function SupplierForm({
             <SelectValue placeholder="Seleccionar" />
           </SelectTrigger>
           <SelectContent className="max-h-60 rounded-xl border-slate-200 dark:border-zinc-800">
-            <SelectItem value="1">Cédula de Ciudadanía</SelectItem>
-            <SelectItem value="2">NIT</SelectItem>
-            <SelectItem value="3">Cédula de Extranjería</SelectItem>
+            {displayDocs.map((d) => {
+              const val = (d.idTipoDocumento || d.id || d.id_tipo_documento).toString();
+              return (
+                <SelectItem key={val} value={val}>
+                  {d.sigla} — {d.descripcion}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </FormField>

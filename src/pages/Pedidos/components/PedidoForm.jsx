@@ -571,19 +571,35 @@ export function PedidoForm({
         </h3>
 
         <div className="flex flex-col md:flex-row items-end gap-3 p-4 bg-slate-50 dark:bg-zinc-950/40 rounded-xl border border-slate-100 dark:border-zinc-850">
-          <div className="flex-1 flex flex-col gap-1.5 w-full">
+          <div className="flex-1 min-w-[200px] flex flex-col gap-1.5 w-full">
             <Label className="text-xs font-semibold text-slate-600 dark:text-zinc-400 flex justify-between">
-              <span>Producto</span>
+              <span>Producto (Nombre)</span>
               {currentDetail.id_producto && <span className="text-[10px] text-slate-400">Disponibles: {stockDisponible}</span>}
             </Label>
             <Select value={currentDetail.id_producto?.toString() || ""} onValueChange={handleProductSelect}>
               <SelectTrigger className="h-10 bg-white dark:bg-zinc-800 text-xs border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
-                <SelectValue placeholder={productsLoading ? "Cargando..." : "Seleccionar producto..."} />
+                <SelectValue placeholder={productsLoading ? "Cargando..." : "Seleccionar por nombre..."} />
               </SelectTrigger>
               <SelectContent>
                 {products.map(p => (
                   <SelectItem key={p.idProducto || p.id_producto} value={(p.idProducto || p.id_producto).toString()}>
-                    {p.nombre} (Ref: {p.referencia || "N/A"})
+                    {p.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-full md:w-48 flex flex-col gap-1.5">
+            <Label className="text-xs font-semibold text-slate-600 dark:text-zinc-400">Referencia</Label>
+            <Select value={currentDetail.id_producto?.toString() || ""} onValueChange={handleProductSelect}>
+              <SelectTrigger className="h-10 bg-white dark:bg-zinc-800 text-xs border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
+                <SelectValue placeholder={productsLoading ? "Cargando..." : "Seleccionar por referencia..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map(p => (
+                  <SelectItem key={p.idProducto || p.id_producto} value={(p.idProducto || p.id_producto).toString()}>
+                    {p.referencia || "Sin Ref"}
                   </SelectItem>
                 ))}
               </SelectContent>

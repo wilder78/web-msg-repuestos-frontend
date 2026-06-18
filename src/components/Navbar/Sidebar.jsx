@@ -145,7 +145,7 @@ const navigation = [
         requiredPermission: "Ver Reportes",
       },
       { icon: History,
-        label: "Historial Compras",
+        label: "Historial de Ventas",
         href: "/dashboard/historial-compras",
         requiredPermission: "Ver Reportes",
       },
