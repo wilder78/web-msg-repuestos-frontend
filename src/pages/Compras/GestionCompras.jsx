@@ -115,7 +115,7 @@ const GestionCompras = () => {
         openWindow("compra-create", { 
             title: "Nueva Compra", 
             type: "compra-create",
-            size: { width: 900, height: 620 }
+            size: { width: 900, height: 740 }
         });
     };
 

@@ -1425,7 +1425,7 @@ const WindowContent = ({ win, onClose }) => {
         {...toastConfig}
         onClose={() => setToastConfig((p) => ({ ...p, visible: false }))}
       />
-      <div className="p-5 overflow-y-auto max-h-[420px] flex-1">
+      <div className={cn("p-5 overflow-y-auto flex-1", win.size?.height ? "max-h-full" : "max-h-[420px]")}>
         {win.type.startsWith("customer-") ? (
           <CustomerForm
             formData={currentFormState}
@@ -1725,6 +1725,8 @@ const FloatingWindow = ({ win }) => {
         left: win.position.x,
         top: win.position.y,
         width: win.size.width,
+        height: win.size.height || "auto",
+        maxHeight: "85vh",
         zIndex: win.zIndex,
       }}
       onClick={() => focusWindow(win.id)}

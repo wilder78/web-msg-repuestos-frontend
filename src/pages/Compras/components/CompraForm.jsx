@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Label } from "../../../components/ui/label";
 import { Input } from "../../../components/ui/input";
 import {
@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { Plus, Trash2, Hash, Calendar, ShoppingBag, FolderArchive } from "lucide-react";
+import { Plus, Trash2, Hash, Calendar, ShoppingBag, FolderArchive, ChevronDown } from "lucide-react";
 import { fetchProveedores } from "../../../services/comprasService";
 import { useProducts } from "../../../hooks/useProducts";
 
@@ -29,6 +29,64 @@ export function CompraForm({
   const [proveedoresLoading, setProveedoresLoading] = useState(false);
   const [currentDetail, setCurrentDetail] = useState(EMPTY_DETAIL);
   const [detailError, setDetailError] = useState("");
+
+  const [proveedorSearch, setProveedorSearch] = useState("");
+  const [showProveedorDropdown, setShowProveedorDropdown] = useState(false);
+  const proveedorDropdownRef = useRef(null);
+
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const productDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (proveedorDropdownRef.current && !proveedorDropdownRef.current.contains(event.target)) {
+        setShowProveedorDropdown(false);
+      }
+      if (productDropdownRef.current && !productDropdownRef.current.contains(event.target)) {
+        setShowProductDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!formData.idProveedor) {
+      setProveedorSearch("");
+    } else {
+      const prov = proveedores.find(p => p.idProveedor?.toString() === formData.idProveedor?.toString());
+      if (prov) {
+        setProveedorSearch(prov.nombreEmpresa || "");
+      }
+    }
+  }, [formData.idProveedor, proveedores]);
+
+  useEffect(() => {
+    if (!currentDetail.idProducto) {
+      setProductSearch("");
+    } else {
+      setProductSearch(currentDetail.nombreProducto || "");
+    }
+  }, [currentDetail.idProducto, currentDetail.nombreProducto]);
+
+  const filteredProveedores = useMemo(() => {
+    if (!proveedorSearch) return proveedores;
+    const currentSelected = proveedores.find(p => p.idProveedor?.toString() === formData.idProveedor?.toString());
+    if (currentSelected && proveedorSearch === currentSelected.nombreEmpresa) return proveedores;
+    return proveedores.filter(p => 
+      p.nombreEmpresa?.toLowerCase().includes(proveedorSearch.toLowerCase()) ||
+      (p.numeroDocumento || "")?.toString().toLowerCase().includes(proveedorSearch.toLowerCase())
+    );
+  }, [proveedores, proveedorSearch, formData.idProveedor]);
+
+  const filteredProducts = useMemo(() => {
+    if (!productSearch) return products;
+    return products.filter(p => 
+      p.nombre?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.referencia?.toLowerCase().includes(productSearch.toLowerCase())
+    );
+  }, [products, productSearch]);
 
   // Load suppliers (proveedores) on mount
   useEffect(() => {
@@ -148,21 +206,51 @@ export function CompraForm({
             <Label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5 block">
               Proveedor <span className="text-emerald-600">*</span>
             </Label>
-            <Select
-              value={formData.idProveedor?.toString() || ""}
-              onValueChange={handleProveedorSelect}
-            >
-              <SelectTrigger className="h-11 rounded-xl bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white focus:ring-emerald-500">
-                <SelectValue placeholder={proveedoresLoading ? "Cargando proveedores..." : "Selecciona el proveedor..."} />
-              </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
-                {proveedores.map((p) => (
-                  <SelectItem key={p.idProveedor} value={p.idProveedor.toString()}>
-                    {p.nombreEmpresa} {p.numeroDocumento ? `(NIT: ${p.numeroDocumento})` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative w-full" ref={proveedorDropdownRef}>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  className="w-full h-11 px-3 pr-8 rounded-xl bg-slate-50 dark:bg-zinc-800 text-sm border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder={proveedoresLoading ? "Cargando proveedores..." : "Selecciona el proveedor..."}
+                  value={proveedorSearch}
+                  onChange={(e) => {
+                    setProveedorSearch(e.target.value);
+                    setShowProveedorDropdown(true);
+                  }}
+                  onFocus={() => setShowProveedorDropdown(true)}
+                  disabled={proveedoresLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowProveedorDropdown(!showProveedorDropdown)}
+                  className="absolute right-0 top-0 bottom-0 px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  tabIndex="-1"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+              {showProveedorDropdown && (
+                <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg p-1">
+                  {filteredProveedores.length === 0 ? (
+                    <div className="p-2 text-xs text-slate-500 text-center">No se encontraron proveedores</div>
+                  ) : (
+                    filteredProveedores.map(p => (
+                      <button
+                        key={p.idProveedor}
+                        type="button"
+                        onClick={() => {
+                          handleProveedorSelect(p.idProveedor.toString());
+                          setShowProveedorDropdown(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-850 text-xs text-slate-900 dark:text-white transition-colors"
+                      >
+                        {p.nombreEmpresa} {p.numeroDocumento ? `(NIT: ${p.numeroDocumento})` : ""}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Fecha */}
@@ -209,24 +297,54 @@ export function CompraForm({
             <Label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block">
               Producto
             </Label>
-            <Select
-              value={currentDetail.idProducto?.toString() || ""}
-              onValueChange={handleProductSelect}
-            >
-              <SelectTrigger className="h-11 rounded-xl bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white text-sm focus:ring-emerald-500">
-                <SelectValue placeholder={productsLoading ? "Cargando..." : "Seleccione producto..."} />
-              </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
-                {products.map((p) => {
-                  const id = p.idProducto || p.id_producto;
-                  return (
-                    <SelectItem key={id} value={id.toString()}>
-                      {p.nombre} {p.referencia ? `(${p.referencia})` : ""}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            <div className="relative w-full" ref={productDropdownRef}>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  className="w-full h-11 px-3 pr-8 rounded-xl bg-slate-50 dark:bg-zinc-800 text-sm border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder={productsLoading ? "Cargando..." : "Seleccione producto..."}
+                  value={productSearch}
+                  onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    setShowProductDropdown(true);
+                  }}
+                  onFocus={() => setShowProductDropdown(true)}
+                  disabled={productsLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowProductDropdown(!showProductDropdown)}
+                  className="absolute right-0 top-0 bottom-0 px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  tabIndex="-1"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+              {showProductDropdown && (
+                <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg p-1">
+                  {filteredProducts.length === 0 ? (
+                    <div className="p-2 text-xs text-slate-500 text-center">No se encontraron productos</div>
+                  ) : (
+                    filteredProducts.map(p => {
+                      const id = p.idProducto || p.id_producto;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => {
+                            handleProductSelect(id.toString());
+                            setShowProductDropdown(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-850 text-xs text-slate-900 dark:text-white transition-colors"
+                        >
+                          {p.nombre} {p.referencia ? `(${p.referencia})` : ""}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className="w-full md:w-28">
             <Label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block">
@@ -270,8 +388,7 @@ export function CompraForm({
           </p>
         )}
 
-        {/* Tabla de ítems */}
-        <div className="border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+                <div className="border border-slate-200 dark:border-zinc-800 rounded-xl overflow-x-auto max-h-[160px] overflow-y-auto">
           <table className="w-full text-xs text-left">
             <thead className="text-slate-500 dark:text-zinc-400 uppercase border-b border-slate-200 dark:border-zinc-800 font-semibold tracking-wider">
               <tr className="bg-slate-50 dark:bg-zinc-800">
@@ -312,33 +429,32 @@ export function CompraForm({
                 </tr>
               ))}
             </tbody>
-            {formData.detalles?.length > 0 && (
-              <tfoot className="bg-emerald-650 text-white font-mono border-t border-slate-200 dark:border-zinc-800">
-                <tr>
-                  <td colSpan="3" className="px-4 py-2 text-right uppercase font-bold tracking-widest text-[10px] text-emerald-100">Subtotal:</td>
-                  <td className="px-4 py-2 text-right font-black text-sm">
-                    ${parseFloat(subtotalAcumulado).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-                  </td>
-                  <td />
-                </tr>
-                <tr>
-                  <td colSpan="3" className="px-4 py-2 text-right uppercase font-bold tracking-widest text-[10px] text-emerald-100">IVA (19%):</td>
-                  <td className="px-4 py-2 text-right font-black text-sm">
-                    ${parseFloat(ivaCalculado).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-                  </td>
-                  <td />
-                </tr>
-                <tr className="border-t border-emerald-550/50">
-                  <td colSpan="3" className="px-4 py-3 text-right uppercase font-bold tracking-widest text-[10px] text-emerald-100">Total Compra:</td>
-                  <td className="px-4 py-3 text-right font-black text-lg">
-                    ${parseFloat(granTotal).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-                  </td>
-                  <td />
-                </tr>
-              </tfoot>
-            )}
           </table>
         </div>
+
+        {/* Sección de Totales */}
+        {formData.detalles?.length > 0 && (
+          <div className="sticky bottom-0 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 pt-3 pb-2 text-xs z-10 flex flex-col items-end gap-1.5 shadow-[0_-8px_16px_rgba(0,0,0,0.05)] dark:shadow-[0_-8px_16px_rgba(0,0,0,0.3)] pr-4">
+            <div className="flex justify-between w-64 text-slate-500 dark:text-zinc-400">
+              <span>Subtotal:</span>
+              <span className="font-semibold text-slate-700 dark:text-zinc-300">
+                ${parseFloat(subtotalAcumulado).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+              </span>
+            </div>
+            <div className="flex justify-between w-64 text-slate-500 dark:text-zinc-400">
+              <span>IVA (19%):</span>
+              <span className="font-semibold text-slate-700 dark:text-zinc-300">
+                ${parseFloat(ivaCalculado).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+              </span>
+            </div>
+            <div className="flex justify-between w-72 text-sm font-bold text-slate-800 dark:text-zinc-100 border-t border-slate-200 dark:border-zinc-700 pt-2 mt-1">
+              <span className="uppercase tracking-wide">Total Compra:</span>
+              <span className="text-emerald-600 dark:text-emerald-400 text-base">
+                ${parseFloat(granTotal).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { Label } from "../../../components/ui/label";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
-import { ShoppingCart, Plus, Trash2, Hash, Calendar, FileText, User, BadgeCheck, Pencil, Check, Info, Box, AlertCircle } from "lucide-react";
+import { ShoppingCart, Plus, Trash2, Hash, Calendar, FileText, User, BadgeCheck, Pencil, Check, Info, Box, AlertCircle, ChevronDown } from "lucide-react";
 import { useProducts } from "../../../hooks/useProducts";
 import PreciosVigentesPopover from "../../../components/feedback/PreciosVigentesPopover";
 
@@ -113,6 +113,11 @@ export function PedidoForm({
   submitError = null,
   onValidityChange,
 }) {
+  const getCustomerId = (c) => c.idCliente || c.id_cliente || c.id;
+  const getCustomerName = (c) => c.razonSocial || c.clienteNombre || c.nombreCliente || c.nombre || c.numeroDocumento || `Cliente ID: ${getCustomerId(c)}`;
+  const getCustomerAddress = (c) => c.direccion || c.address || "Sin dato";
+  const getCustomerCity = (c) => c.municipio?.nombre || c.municipio?.name || c.ciudad || c.city || c.nombreMunicipio || c.municipioNombre || "Sin dato";
+
   const { products, loading: productsLoading } = useProducts();
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(true);
@@ -132,6 +137,79 @@ export function PedidoForm({
   const [editingDetailIndex, setEditingDetailIndex] = useState(null);
   const [showPriceList, setShowPriceList] = useState(false);
   const priceManuallySet = useRef(false);
+
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [refSearch, setRefSearch] = useState("");
+  const [showRefDropdown, setShowRefDropdown] = useState(false);
+
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+
+  const productDropdownRef = useRef(null);
+  const refDropdownRef = useRef(null);
+  const customerDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (productDropdownRef.current && !productDropdownRef.current.contains(event.target)) {
+        setShowProductDropdown(false);
+      }
+      if (refDropdownRef.current && !refDropdownRef.current.contains(event.target)) {
+        setShowRefDropdown(false);
+      }
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(event.target)) {
+        setShowCustomerDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!currentDetail.id_producto) {
+      setProductSearch("");
+      setRefSearch("");
+    } else {
+      setProductSearch(currentDetail.nombreProducto || "");
+      setRefSearch(currentDetail.referenciaProducto || "");
+    }
+  }, [currentDetail.id_producto, currentDetail.nombreProducto, currentDetail.referenciaProducto]);
+
+  useEffect(() => {
+    if (!formData.id_cliente) {
+      setCustomerSearch("");
+    } else {
+      const customer = customers.find(c => getCustomerId(c)?.toString() === formData.id_cliente?.toString());
+      if (customer) {
+        setCustomerSearch(getCustomerName(customer));
+      }
+    }
+  }, [formData.id_cliente, customers]);
+
+  const filteredProductsByName = useMemo(() => {
+    if (!productSearch) return products;
+    return products.filter(p => 
+      p.nombre?.toLowerCase().includes(productSearch.toLowerCase())
+    );
+  }, [products, productSearch]);
+
+  const filteredProductsByRef = useMemo(() => {
+    if (!refSearch) return products;
+    return products.filter(p => 
+      p.referencia?.toLowerCase().includes(refSearch.toLowerCase())
+    );
+  }, [products, refSearch]);
+
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch) return customers;
+    const currentSelected = customers.find(c => getCustomerId(c)?.toString() === formData.id_cliente?.toString());
+    if (currentSelected && customerSearch === getCustomerName(currentSelected)) return customers;
+    return customers.filter(c => 
+      getCustomerName(c)?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+      (c.numeroDocumento || c.documento || "")?.toString().toLowerCase().includes(customerSearch.toLowerCase())
+    );
+  }, [customers, customerSearch, formData.id_cliente]);
 
   useEffect(() => {
     fetchCatalogs();
@@ -246,10 +324,7 @@ export function PedidoForm({
     }
   };
 
-  const getCustomerId = (c) => c.idCliente || c.id_cliente || c.id;
-  const getCustomerName = (c) => c.razonSocial || c.clienteNombre || c.nombreCliente || c.nombre || c.numeroDocumento || `Cliente ID: ${getCustomerId(c)}`;
-  const getCustomerAddress = (c) => c.direccion || c.address || "Sin dato";
-  const getCustomerCity = (c) => c.municipio?.nombre || c.municipio?.name || c.ciudad || c.city || c.nombreMunicipio || c.municipioNombre || "Sin dato";
+
 
   const selectedCustomer = customers.find((c) => getCustomerId(c)?.toString() === formData.id_cliente?.toString());
   const selectedSeller = sellers.find((s) => s.idVendedor?.toString() === formData.id_vendedor?.toString());
@@ -445,18 +520,51 @@ export function PedidoForm({
         {!isEditing ? (
           <div className="flex flex-col gap-1.5 w-full">
             <Label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Cliente Asociado <span className="text-[#10b981]">*</span></Label>
-            <Select value={formData.id_cliente?.toString() || ""} onValueChange={handleCustomerSelect}>
-              <SelectTrigger className="h-[42px] border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-900 dark:text-white">
-                <SelectValue placeholder={customersLoading ? "Cargando clientes..." : "Selecciona un cliente de la lista"} />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map((c) => (
-                  <SelectItem key={getCustomerId(c)} value={getCustomerId(c).toString()}>
-                    {getCustomerName(c)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative w-full" ref={customerDropdownRef}>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  className="w-full h-[42px] px-3 pr-8 rounded-lg bg-white dark:bg-zinc-800 text-xs border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-violet-500 focus:border-violet-500"
+                  placeholder={customersLoading ? "Cargando clientes..." : "Selecciona un cliente de la lista..."}
+                  value={customerSearch}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value);
+                    setShowCustomerDropdown(true);
+                  }}
+                  onFocus={() => setShowCustomerDropdown(true)}
+                  disabled={customersLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCustomerDropdown(!showCustomerDropdown)}
+                  className="absolute right-0 top-0 bottom-0 px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  tabIndex="-1"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+              {showCustomerDropdown && (
+                <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg p-1">
+                  {filteredCustomers.length === 0 ? (
+                    <div className="p-2 text-xs text-slate-500 text-center">No se encontraron clientes</div>
+                  ) : (
+                    filteredCustomers.map(c => (
+                      <button
+                        key={getCustomerId(c)}
+                        type="button"
+                        onClick={() => {
+                          handleCustomerSelect(getCustomerId(c).toString());
+                          setShowCustomerDropdown(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-850 text-xs text-slate-900 dark:text-white transition-colors"
+                      >
+                        {getCustomerName(c)}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid gap-x-4 gap-y-3 md:grid-cols-2 text-xs">
@@ -576,34 +684,94 @@ export function PedidoForm({
               <span>Producto (Nombre)</span>
               {currentDetail.id_producto && <span className="text-[10px] text-slate-400">Disponibles: {stockDisponible}</span>}
             </Label>
-            <Select value={currentDetail.id_producto?.toString() || ""} onValueChange={handleProductSelect}>
-              <SelectTrigger className="h-10 bg-white dark:bg-zinc-800 text-xs border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
-                <SelectValue placeholder={productsLoading ? "Cargando..." : "Seleccionar por nombre..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map(p => (
-                  <SelectItem key={p.idProducto || p.id_producto} value={(p.idProducto || p.id_producto).toString()}>
-                    {p.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative w-full" ref={productDropdownRef}>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  className="w-full h-10 px-3 pr-8 rounded-lg bg-white dark:bg-zinc-800 text-xs border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-violet-500 focus:border-violet-500"
+                  placeholder={productsLoading ? "Cargando..." : "Seleccionar por nombre..."}
+                  value={productSearch}
+                  onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    setShowProductDropdown(true);
+                  }}
+                  onFocus={() => setShowProductDropdown(true)}
+                  disabled={productsLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowProductDropdown(!showProductDropdown)}
+                  className="absolute right-0 top-0 bottom-0 px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  tabIndex="-1"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+              {showProductDropdown && (
+                <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg p-1">
+                  {filteredProductsByName.length === 0 ? (
+                    <div className="p-2 text-xs text-slate-500 text-center">No se encontraron productos</div>
+                  ) : (
+                    filteredProductsByName.map(p => (
+                      <button
+                        key={p.idProducto || p.id_producto}
+                        type="button"
+                        onClick={() => handleProductSelect((p.idProducto || p.id_producto).toString())}
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-850 text-xs text-slate-900 dark:text-white transition-colors"
+                      >
+                        {p.nombre}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="w-full md:w-48 flex flex-col gap-1.5">
             <Label className="text-xs font-semibold text-slate-600 dark:text-zinc-400">Referencia</Label>
-            <Select value={currentDetail.id_producto?.toString() || ""} onValueChange={handleProductSelect}>
-              <SelectTrigger className="h-10 bg-white dark:bg-zinc-800 text-xs border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white">
-                <SelectValue placeholder={productsLoading ? "Cargando..." : "Seleccionar por referencia..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map(p => (
-                  <SelectItem key={p.idProducto || p.id_producto} value={(p.idProducto || p.id_producto).toString()}>
-                    {p.referencia || "Sin Ref"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative w-full" ref={refDropdownRef}>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  className="w-full h-10 px-3 pr-8 rounded-lg bg-white dark:bg-zinc-800 text-xs border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-violet-500 focus:border-violet-500"
+                  placeholder={productsLoading ? "Cargando..." : "Seleccionar por referencia..."}
+                  value={refSearch}
+                  onChange={(e) => {
+                    setRefSearch(e.target.value);
+                    setShowRefDropdown(true);
+                  }}
+                  onFocus={() => setShowRefDropdown(true)}
+                  disabled={productsLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowRefDropdown(!showRefDropdown)}
+                  className="absolute right-0 top-0 bottom-0 px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  tabIndex="-1"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+              {showRefDropdown && (
+                <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg p-1">
+                  {filteredProductsByRef.length === 0 ? (
+                    <div className="p-2 text-xs text-slate-500 text-center">No se encontraron referencias</div>
+                  ) : (
+                    filteredProductsByRef.map(p => (
+                      <button
+                        key={p.idProducto || p.id_producto}
+                        type="button"
+                        onClick={() => handleProductSelect((p.idProducto || p.id_producto).toString())}
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-850 text-xs text-slate-900 dark:text-white transition-colors"
+                      >
+                        {p.referencia || "Sin Ref"}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="w-full md:w-20 flex flex-col gap-1.5">
@@ -671,7 +839,7 @@ export function PedidoForm({
         </div>
 
         {/* Tabla de Productos Incluidos */}
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-zinc-800">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-zinc-800 max-h-[160px] overflow-y-auto">
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 dark:bg-zinc-950/80 text-slate-700 dark:text-zinc-300 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-zinc-800">
               <tr>
@@ -723,7 +891,7 @@ export function PedidoForm({
 
         {/* Sección de Totales */}
         {details.length > 0 && (
-          <div className="flex flex-col items-end gap-1.5 pt-3 text-xs border-t border-slate-200 dark:border-zinc-800">
+          <div className="sticky bottom-0 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 pt-3 pb-2 text-xs z-10 flex flex-col items-end gap-1.5 shadow-[0_-8px_16px_rgba(0,0,0,0.05)] dark:shadow-[0_-8px_16px_rgba(0,0,0,0.3)]">
             <div className="flex justify-between w-64 text-slate-500 dark:text-zinc-400">
               <span>Subtotal Bruto:</span>
               <span className="font-semibold text-slate-700 dark:text-zinc-300">${totals.subtotal.toFixed(2)}</span>

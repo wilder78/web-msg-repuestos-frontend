@@ -13,6 +13,7 @@ import {
   User,
   XCircle,
   Info,
+  ChevronDown,
 } from "lucide-react";
 import PreciosVigentesPopover from "../../../components/feedback/PreciosVigentesPopover";
 import { useProducts } from "../../../hooks/useProducts";
@@ -192,6 +193,39 @@ export default function PedidoEditModal({
   const isInitializing = useRef(false);
   const formDataRef = useRef(formData);
   const { products, loading: productsLoading } = useProducts();
+
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const productDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (productDropdownRef.current && !productDropdownRef.current.contains(event.target)) {
+        setShowProductDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!newProduct.id_producto) {
+      setProductSearch("");
+    } else {
+      const ref = getProductReference(newProduct.producto);
+      setProductSearch(
+        `${newProduct.nombreProducto || ""}${ref ? ` | Ref: ${ref}` : ""}`
+      );
+    }
+  }, [newProduct.id_producto, newProduct.nombreProducto, newProduct.producto]);
+
+  const filteredProducts = useMemo(() => {
+    if (!productSearch || (newProduct.id_producto && productSearch.startsWith(newProduct.nombreProducto))) return products;
+    return products.filter(p => 
+      getProductName(p)?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      getProductReference(p)?.toLowerCase().includes(productSearch.toLowerCase())
+    );
+  }, [products, productSearch, newProduct.id_producto, newProduct.nombreProducto]);
 
   // Mantener formDataRef siempre actualizado
   useEffect(() => {
@@ -677,26 +711,57 @@ export default function PedidoEditModal({
             <div className="mt-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/40 p-4">
               <div className="grid items-end gap-3 md:grid-cols-[minmax(0,1fr)_80px_120px_104px_48px]">
                 <LabeledControl label="Catalogo de Productos">
-                  <select
-                    value={newProduct.id_producto?.toString() || ""}
-                    onChange={(e) => handleProductSelect(e.target.value)}
-                    className="h-9 w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-                  >
-                    <option value="">
-                      {productsLoading ? "Cargando productos..." : "Buscar producto..."}
-                    </option>
-                    {products
-                      .filter((product) => getProductId(product))
-                      .map((product) => {
-                        const reference = getProductReference(product);
-                        const stock = product.stockBuenEstado ?? product.stock_buen_estado ?? 0;
-                        return (
-                          <option key={getProductId(product)} value={getProductId(product)}>
-                            {getProductName(product)} {reference ? `| Ref: ${reference}` : ""} | Disp: {stock}
-                          </option>
-                        );
-                      })}
-                  </select>
+                  <div className="relative w-full" ref={productDropdownRef}>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        className="h-9 w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 pr-8 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                        placeholder={productsLoading ? "Cargando productos..." : "Buscar producto..."}
+                        value={productSearch}
+                        onChange={(e) => {
+                          setProductSearch(e.target.value);
+                          setShowProductDropdown(true);
+                        }}
+                        onFocus={() => setShowProductDropdown(true)}
+                        disabled={productsLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowProductDropdown(!showProductDropdown)}
+                        className="absolute right-0 top-0 bottom-0 px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        tabIndex="-1"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </div>
+                    {showProductDropdown && (
+                      <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg p-1">
+                        {filteredProducts.length === 0 ? (
+                          <div className="p-2 text-xs text-slate-500 text-center">No se encontraron productos</div>
+                        ) : (
+                          filteredProducts
+                            .filter((product) => getProductId(product))
+                            .map((product) => {
+                              const reference = getProductReference(product);
+                              const stock = product.stockBuenEstado ?? product.stock_buen_estado ?? 0;
+                              return (
+                                <button
+                                  key={getProductId(product)}
+                                  type="button"
+                                  onClick={() => {
+                                    handleProductSelect(getProductId(product).toString());
+                                    setShowProductDropdown(false);
+                                  }}
+                                  className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-xs text-slate-900 dark:text-white transition-colors"
+                                >
+                                  {getProductName(product)} {reference ? `| Ref: ${reference}` : ""} | Disp: {stock}
+                                </button>
+                              );
+                            })
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </LabeledControl>
 
                 <LabeledControl label="Cant.">
