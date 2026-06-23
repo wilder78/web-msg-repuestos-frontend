@@ -89,12 +89,24 @@ const PedidoTable = ({
   /* ── Construir opciones visibles según estado y rol ────────── */
   const buildOptions = (pedido) => {
     const currentStatus = Number(pedido.idEstado ?? pedido.id_estado_pedido ?? 1);
-    return PEDIDO_STATUS_OPTIONS.filter((opt) => {
-      if (opt.value === 5 && currentStatus !== 5) return false;        // Pagado: solo si ya está pagado
-      if (opt.value === 3 && currentStatus !== 3) return false;        // Cancelado: solo si ya está cancelado
-      if (currentStatus === 4 && !isMasterUser && opt.value < 4) return false; // Entregado sin master
-      return true;
-    });
+    const hasStockIssue = pedido.stock_disponible === false;
+
+    return PEDIDO_STATUS_OPTIONS.map((opt) => {
+      if (opt.value === 5 && currentStatus !== 5) return null;        // Pagado: solo si ya está pagado
+      if (opt.value === 3 && currentStatus !== 3) return null;        // Cancelado: solo si ya está cancelado
+      if (currentStatus === 4 && !isMasterUser && opt.value < 4) return null; // Entregado sin master
+
+      // Deshabilitar estados menores al actual o si hay problemas de stock
+      let isOptDisabled = opt.value < currentStatus;
+      if (hasStockIssue && (opt.value === 2 || opt.value === 4)) {
+        isOptDisabled = true;
+      }
+
+      return {
+        ...opt,
+        disabled: isOptDisabled
+      };
+    }).filter(Boolean);
   };
 
   /* ── Loading / vacío ────────────────────────────────────────── */
@@ -135,6 +147,10 @@ const PedidoTable = ({
             const isCancelled = statusMeta.value === 3;
             const isDelivered = statusMeta.value === 4;
             const isPaid      = statusMeta.value === 5;
+            const hasStockIssue = pedido.stock_disponible === false;
+            const stockTooltip = hasStockIssue
+              ? `Stock insuficiente en:\n${(pedido.missing_stock_products || []).map(p => `• ${p.nombre} (Faltan: ${p.solicitado - p.disponible})`).join('\n')}`
+              : undefined;
 
             const customerName =
               pedido.nombreCliente ||
@@ -183,12 +199,24 @@ const PedidoTable = ({
 
                 {/* Estado — StatusDropdown genérico */}
                 <TableCell className="h-12 px-2 align-middle overflow-visible">
-                  <StatusDropdown
-                    currentValue={Number(pedido.idEstado ?? pedido.id_estado_pedido ?? 1)}
-                    options={buildOptions(pedido)}
-                    disabled={isPaid && !isMasterUser}
-                    onStatusChange={(nextStatus) => onStatusChange?.(pedido, nextStatus)}
-                  />
+                  <div className="flex items-center gap-2">
+                    <div title={isCancelled ? "No se puede modificar un pedido cancelado" : stockTooltip}>
+                      <StatusDropdown
+                        currentValue={Number(pedido.idEstado ?? pedido.id_estado_pedido ?? 1)}
+                        options={buildOptions(pedido)}
+                        disabled={(isPaid && !isMasterUser) || isCancelled}
+                        onStatusChange={(nextStatus) => onStatusChange?.(pedido, nextStatus)}
+                      />
+                    </div>
+                    {hasStockIssue && (
+                      <span 
+                        title={stockTooltip}
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-800 cursor-help"
+                      >
+                        Stock Insuficiente
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
 
                 {/* Acciones */}

@@ -55,21 +55,14 @@ const fetchOrdersInProgressCount = async () => {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  const urls = ["/api/orders", "http://localhost:8080/api/orders"];
+  const urls = ["/api/orders/pending-count", "http://localhost:8080/api/orders/pending-count"];
 
   for (const url of urls) {
     try {
       const response = await fetch(url, { headers });
       if (response.ok) {
         const payload = await response.json();
-        const list = extractList(payload);
-        // Filtramos por estado_pedido === 2 (Separación) o 3 (En camino/Tránsito)
-        const inProgress = list.filter(
-          (o) =>
-            Number(o.id_estado_pedido || o.idEstadoPedido) === 2 ||
-            Number(o.id_estado_pedido || o.idEstadoPedido) === 3
-        );
-        return inProgress.length;
+        return payload.total ?? 0;
       }
     } catch (e) {
       // Intentar el siguiente endpoint
@@ -225,6 +218,13 @@ export function Sidebar({ className }) {
 
     loadOrdersCount();
     loadComprasCount();
+
+    // Listeners for immediate updates on mutations
+    const handleOrderChanged = () => {
+      loadOrdersCount();
+    };
+    window.addEventListener("order-changed", handleOrderChanged);
+
     const intervalId = window.setInterval(() => {
       loadOrdersCount();
       loadComprasCount();
@@ -232,6 +232,7 @@ export function Sidebar({ className }) {
 
     return () => {
       isMounted = false;
+      window.removeEventListener("order-changed", handleOrderChanged);
       window.clearInterval(intervalId);
     };
   }, []);

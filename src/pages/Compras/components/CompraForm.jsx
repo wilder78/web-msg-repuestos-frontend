@@ -242,7 +242,7 @@ export function CompraForm({
                           handleProveedorSelect(p.idProveedor.toString());
                           setShowProveedorDropdown(false);
                         }}
-                        className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-850 text-xs text-slate-900 dark:text-white transition-colors"
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-xs text-slate-900 dark:text-white transition-colors"
                       >
                         {p.nombreEmpresa} {p.numeroDocumento ? `(NIT: ${p.numeroDocumento})` : ""}
                       </button>
@@ -282,7 +282,7 @@ export function CompraForm({
         </div>
       </div>
 
-      <div className="border-t border-slate-100 dark:border-zinc-850" />
+      <div className="border-t border-slate-100 dark:border-zinc-800" />
 
       {/* ── Sección 2: Ítems ── */}
       <div>
@@ -335,7 +335,7 @@ export function CompraForm({
                             handleProductSelect(id.toString());
                             setShowProductDropdown(false);
                           }}
-                          className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-850 text-xs text-slate-900 dark:text-white transition-colors"
+                          className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-xs text-slate-900 dark:text-white transition-colors"
                         >
                           {p.nombre} {p.referencia ? `(${p.referencia})` : ""}
                         </button>
@@ -408,9 +408,9 @@ export function CompraForm({
                 </tr>
               )}
               {(formData.detalles || []).map((det, idx) => (
-                <tr key={idx} className="border-b last:border-0 border-slate-100 dark:border-zinc-800 hover:bg-slate-50/50 dark:hover:bg-zinc-850/50">
+                <tr key={idx} className="border-b last:border-0 border-slate-100 dark:border-zinc-800 hover:bg-slate-50/50 dark:hover:bg-zinc-800/50">
                   <td className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">{det.nombreProducto}</td>
-                  <td className="px-4 py-3 text-center font-medium bg-slate-50/30 dark:bg-zinc-850/30">{det.cantidad}</td>
+                  <td className="px-4 py-3 text-center font-medium bg-slate-50/30 dark:bg-zinc-800/30">{det.cantidad}</td>
                   <td className="px-4 py-3 text-right text-slate-500 dark:text-zinc-400">
                     ${parseFloat(det.precioUnitario).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
                   </td>

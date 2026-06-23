@@ -133,17 +133,21 @@ const StatusDropdown = ({
           {options.map((opt) => {
             const isSelected = Number(opt.value) === Number(currentValue);
             const dotColor   = getDotColor(opt);
+            const isOptDisabled = opt.disabled;
 
             return (
               <li key={opt.value} role="option" aria-selected={isSelected}>
                 <button
                   type="button"
-                  onClick={() => handleSelect(opt)}
+                  disabled={isOptDisabled}
+                  onClick={() => !isOptDisabled && handleSelect(opt)}
                   className={[
                     "flex w-full items-center gap-2.5 px-3 py-2.5",
-                    "text-sm font-medium text-[#2D3748] transition-colors duration-100",
-                    "hover:bg-[#F4F6F8] focus:bg-[#F4F6F8] focus:outline-none",
-                    isSelected ? "bg-[#F4F6F8]" : "bg-white",
+                    "text-sm font-medium transition-colors duration-100",
+                    isOptDisabled 
+                      ? "text-slate-300 cursor-not-allowed opacity-50 bg-slate-50/50" 
+                      : "text-[#2D3748] hover:bg-[#F4F6F8] focus:bg-[#F4F6F8] focus:outline-none",
+                    isSelected && !isOptDisabled ? "bg-[#F4F6F8]" : "bg-white",
                   ].join(" ")}
                 >
                   {/* Punto indicador de color */}

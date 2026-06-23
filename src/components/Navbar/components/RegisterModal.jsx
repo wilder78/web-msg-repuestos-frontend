@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { X, Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { X, Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, FileText, Phone, MapPin } from "lucide-react";
 
 const API = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
@@ -23,8 +23,114 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   const [submitting, setSubmitting] = useState(false);
   const emailTimer = useRef(null);
 
+  // Campos adicionales para cliente
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [idTipoDocumento, setIdTipoDocumento] = useState("1"); // Default CC
+  const [numeroDocumento, setNumeroDocumento] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [direccion, setDireccion] = useState("");
+
+  // Ubicación geógrafica
+  const [departments, setDepartments] = useState([]);
+  const [idDepartamento, setIdDepartamento] = useState("");
+  const [municipalities, setMunicipalities] = useState([]);
+  const [municipioId, setMunicipioId] = useState("");
+
+  // Estado de validación del documento
+  const [documentStatus, setDocumentStatus] = useState(null); // 'checking' | 'available' | 'taken'
+  const [documentOwner, setDocumentOwner] = useState("");
+  const documentTimer = useRef(null);
+
   const passwordErrors = PASSWORD_RULES.filter((r) => !r.re.test(password));
   const passwordValid = passwordErrors.length === 0 && password.length > 0;
+
+  // Cargar tipos de documentos
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch(`${API}/tipo-documento`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data && data.data) || [];
+        setDocumentTypes(list);
+        if (list.length > 0 && list[0]) {
+          const firstId = list[0].idTipoDocumento || list[0].id || list[0].id_tipo_documento;
+          if (firstId !== undefined && firstId !== null) {
+            setIdTipoDocumento(firstId.toString());
+          }
+        }
+      })
+      .catch((err) => console.error("Error cargando tipos de documento:", err));
+  }, [isOpen]);
+
+  // Cargar departamentos
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch(`${API}/departments`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data && data.data) || [];
+        setDepartments(list);
+      })
+      .catch((err) => console.error("Error cargando departamentos:", err));
+  }, [isOpen]);
+
+  // Cargar municipios cuando cambia el departamento
+  useEffect(() => {
+    if (!idDepartamento) {
+      setMunicipalities([]);
+      setMunicipioId("");
+      return;
+    }
+    fetch(`${API}/municipalities/department/${idDepartamento}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data && data.data) || [];
+        setMunicipalities(list);
+        if (list.length > 0 && list[0]) {
+          const firstId = list[0].municipioId || list[0].id;
+          setMunicipioId(firstId ? firstId.toString() : "");
+        } else {
+          setMunicipioId("");
+        }
+      })
+      .catch((err) => console.error("Error cargando municipios:", err));
+  }, [idDepartamento]);
+
+  const checkDocumentAvailability = (docNum, docType) => {
+    clearTimeout(documentTimer.current);
+    if (!docNum || !docType) {
+      setDocumentStatus(null);
+      setDocumentOwner("");
+      return;
+    }
+    setDocumentStatus("checking");
+    setDocumentOwner("");
+    documentTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API}/users/check-document?idTipoDocumento=${docType}&numeroDocumento=${encodeURIComponent(docNum)}`);
+        const data = await res.json();
+        if (data.disponible) {
+          setDocumentStatus("available");
+        } else {
+          setDocumentStatus("taken");
+          setDocumentOwner(data.razonSocial || "");
+        }
+      } catch {
+        setDocumentStatus(null);
+      }
+    }, 500);
+  };
+
+  const handleDocTypeChange = (val) => {
+    setIdTipoDocumento(val);
+    checkDocumentAvailability(numeroDocumento, val);
+  };
+
+  const handleDocNumChange = (val) => {
+    const cleanVal = val.replace(/[^0-9]/g, "");
+    setNumeroDocumento(cleanVal);
+    checkDocumentAvailability(cleanVal, idTipoDocumento);
+  };
 
   const checkEmailAvailability = (value) => {
     clearTimeout(emailTimer.current);
@@ -51,6 +157,12 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
     setSuccessMsg("");
 
     if (!nombre.trim()) { setError("El nombre es obligatorio"); return; }
+    if (!numeroDocumento.trim()) { setError("El número de documento es obligatorio"); return; }
+    if (documentStatus === "taken") { setError(`El documento ya está registrado a nombre de ${documentOwner || "otro cliente"}.`); return; }
+    if (!idDepartamento) { setError("El departamento es obligatorio"); return; }
+    if (!municipioId) { setError("El municipio es obligatorio"); return; }
+    if (!telefono.trim()) { setError("El teléfono de contacto es obligatorio"); return; }
+    if (!direccion.trim()) { setError("La dirección es obligatoria"); return; }
     if (password !== confirmPassword) { setError("Las contraseñas no coinciden"); return; }
     if (!passwordValid) { setError("La contraseña no cumple los requisitos de seguridad"); return; }
     if (emailStatus === "taken") { setError("Este correo ya está registrado"); return; }
@@ -66,6 +178,11 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
           password,
           idRol: 4,
           idEstado: 1,
+          idTipoDocumento: parseInt(idTipoDocumento, 10),
+          numeroDocumento: numeroDocumento.trim(),
+          direccion: direccion.trim(),
+          telefono: telefono.trim(),
+          municipioId: parseInt(municipioId, 10),
         }),
       });
       const data = await res.json();
@@ -77,6 +194,14 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
         setEmail("");
         setPassword("");
         setConfirmPassword("");
+        setNumeroDocumento("");
+        setTelefono("");
+        setDireccion("");
+        setIdDepartamento("");
+        setMunicipalities([]);
+        setMunicipioId("");
+        setDocumentStatus(null);
+        setDocumentOwner("");
         setEmailStatus(null);
         return;
       }
@@ -107,7 +232,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
       `}</style>
 
-      <div className="bg-[#FFFFFF] w-full max-w-md rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.15)] overflow-hidden relative animate-slide-up border border-[#DEE2E6] max-h-[90vh] flex flex-col">
+      <div className="bg-[#FFFFFF] w-full max-w-2xl rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.15)] overflow-hidden relative animate-slide-up border border-[#DEE2E6] max-h-[90vh] flex flex-col">
         <div className="h-1 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 shrink-0"></div>
 
         <button onClick={onClose} className="absolute top-4 right-4 p-1 text-[#343A40] hover:bg-black/5 rounded-full transition-all z-20">
@@ -125,7 +250,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             <p className="text-[#6C757D] text-sm mt-1 px-2">Únete a la comunidad líder en repuestos y accesorios</p>
           </header>
 
-          <form className="space-y-4 bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6]" onSubmit={handleSubmit}>
+          <form className="bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6] flex flex-col gap-4" onSubmit={handleSubmit}>
             {error && (
               <div className="p-3 bg-red-600/10 border border-red-600/50 rounded-xl text-red-500 text-xs text-center font-bold">{error}</div>
             )}
@@ -133,97 +258,240 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
               <div className="p-3 bg-emerald-600/10 border border-emerald-600/50 rounded-xl text-emerald-500 text-xs text-center font-bold">{successMsg}</div>
             )}
 
-            {/* Nombre */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Nombre completo</label>
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Juan Pérez" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* --- COLUMNA 1: Datos Personales/Cliente --- */}
+              <div className="space-y-4">
+                <p className="text-[11px] font-bold text-red-600 uppercase tracking-widest border-b border-[#DEE2E6] pb-1">Datos de Facturación</p>
+
+                {/* Nombre */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Nombre completo</label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Juan Pérez" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
+                  </div>
+                </div>
+
+                {/* Tipo de Documento */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Tipo de documento</label>
+                  <div className="relative group">
+                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <select
+                      value={idTipoDocumento}
+                      onChange={(e) => handleDocTypeChange(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] shadow-sm transition-all text-sm appearance-none"
+                    >
+                      {documentTypes && documentTypes.length > 0 ? (
+                        documentTypes?.map((dt) => {
+                          const val = dt.idTipoDocumento || dt.id || dt.id_tipo_documento;
+                          return (
+                            <option key={val} value={val}>
+                              {dt.descripcion} ({dt.sigla})
+                            </option>
+                          );
+                        })
+                      ) : (
+                        <>
+                          <option value="1">Cédula de Ciudadanía (C.C.)</option>
+                          <option value="2">NIT (Número de Identificación Tributaria)</option>
+                          <option value="3">Cédula de Extranjería (C.E.)</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Número de Documento */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Número de documento</label>
+                  <div className="relative group">
+                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      value={numeroDocumento}
+                      onChange={(e) => handleDocNumChange(e.target.value)}
+                      placeholder="Ej: 10203040"
+                      className={`w-full pl-12 pr-10 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
+                        documentStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : documentStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
+                      }`}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2">
+                      {documentStatus === "checking" && <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-r-transparent" />}
+                      {documentStatus === "available" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                      {documentStatus === "taken" && <XCircle className="h-4 w-4 text-red-500" />}
+                    </span>
+                  </div>
+                  {documentStatus === "taken" && <p className="text-[10px] text-red-500 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Documento registrado a nombre de {documentOwner || "otro cliente"}</p>}
+                  {documentStatus === "available" && <p className="text-[10px] text-emerald-500 mt-1 ml-1">Documento disponible</p>}
+                </div>
+
+                {/* Teléfono */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Teléfono de contacto</label>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="Ej: 3001234567"
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Dirección */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Dirección de entrega</label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      value={direccion}
+                      onChange={(e) => setDireccion(e.target.value)}
+                      placeholder="Ej: Calle 50 #10-20"
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Departamento */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Departamento</label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <select
+                      value={idDepartamento}
+                      onChange={(e) => setIdDepartamento(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] shadow-sm transition-all text-sm appearance-none"
+                    >
+                      <option value="">Selecciona un departamento</option>
+                      {departments.map((d) => {
+                        const val = d.idDepartamento || d.id;
+                        return (
+                          <option key={val} value={val}>
+                            {d.name || d.nombre}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Municipio / Ciudad */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Municipio / Ciudad</label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <select
+                      value={municipioId}
+                      onChange={(e) => setMunicipioId(e.target.value)}
+                      disabled={!idDepartamento}
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] shadow-sm transition-all text-sm appearance-none disabled:bg-gray-100 disabled:text-gray-400"
+                    >
+                      <option value="">Selecciona un municipio</option>
+                      {municipalities.map((m) => {
+                        const val = m.municipioId || m.id;
+                        return (
+                          <option key={val} value={val}>
+                            {m.name || m.nombre}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* --- COLUMNA 2: Credenciales de Cuenta --- */}
+              <div className="space-y-4">
+                <p className="text-[11px] font-bold text-red-600 uppercase tracking-widest border-b border-[#DEE2E6] pb-1">Credenciales de Usuario</p>
+
+                {/* Email */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Correo electrónico</label>
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); checkEmailAvailability(e.target.value); }}
+                      placeholder="tu@email.com"
+                      className={`w-full pl-12 pr-10 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
+                        emailStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : emailStatus === "inactive" ? "border-amber-500/50 focus:ring-amber-600/10" : emailStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
+                      }`}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2">
+                      {emailStatus === "checking" && <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-r-transparent" />}
+                      {emailStatus === "available" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                      {emailStatus === "taken" && <XCircle className="h-4 w-4 text-red-500" />}
+                      {emailStatus === "inactive" && <AlertCircle className="h-4 w-4 text-amber-500" />}
+                    </span>
+                  </div>
+                  {emailStatus === "taken" && <p className="text-[10px] text-red-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Este correo ya está registrado</p>}
+                  {emailStatus === "inactive" && <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Registrado pero sin activar. Regístrate para recibir otro enlace.</p>}
+                  {emailStatus === "available" && <p className="text-[10px] text-emerald-400 mt-1 ml-1">Correo disponible</p>}
+                </div>
+
+                {/* Contraseña */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Contraseña</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className={`w-full pl-12 pr-12 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
+                        password && !passwordValid ? "border-amber-500/50 focus:ring-amber-600/10" : passwordValid ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
+                      }`}
+                    />
+                    <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500 transition-colors" tabIndex={-1}>
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirmar contraseña */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Confirmar contraseña</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className={`w-full pl-12 pr-12 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
+                        confirmPassword && password !== confirmPassword ? "border-red-600/50 focus:ring-red-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
+                      }`}
+                    />
+                    <button type="button" onClick={() => setShowConfirmPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500 transition-colors" tabIndex={-1}>
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {confirmPassword && password !== confirmPassword && <p className="text-[10px] text-red-400 mt-1 ml-1">Las contraseñas no coinciden</p>}
+                </div>
+
+                {/* Indicador de fortaleza */}
+                {password && (
+                  <div className="bg-[#FFFFFF] rounded-xl border border-[#DEE2E6] p-3 space-y-1.5">
+                    <p className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest">Requisitos de seguridad</p>
+                    {PASSWORD_RULES.map((rule, i) => {
+                      const ok = rule.re.test(password);
+                      return (
+                        <div key={i} className="flex items-center gap-2">
+                          {ok ? <CheckCircle2 size={10} className="text-emerald-500 shrink-0" /> : <XCircle size={10} className="text-amber-500 shrink-0" />}
+                          <span className={`text-[10px] ${ok ? "text-emerald-500" : "text-[#6C757D]"}`}>{rule.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Correo electrónico</label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); checkEmailAvailability(e.target.value); }}
-                  placeholder="tu@email.com"
-                  className={`w-full pl-12 pr-10 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
-                    emailStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : emailStatus === "inactive" ? "border-amber-500/50 focus:ring-amber-600/10" : emailStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
-                  }`}
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2">
-                  {emailStatus === "checking" && <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-r-transparent" />}
-                  {emailStatus === "available" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-                  {emailStatus === "taken" && <XCircle className="h-4 w-4 text-red-500" />}
-                  {emailStatus === "inactive" && <AlertCircle className="h-4 w-4 text-amber-500" />}
-                </span>
-              </div>
-              {emailStatus === "taken" && <p className="text-[10px] text-red-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Este correo ya está registrado</p>}
-              {emailStatus === "inactive" && <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Registrado pero sin activar. Regístrate para recibir otro enlace.</p>}
-              {emailStatus === "available" && <p className="text-[10px] text-emerald-400 mt-1 ml-1">Correo disponible</p>}
-            </div>
-
-            {/* Contraseña */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Contraseña</label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full pl-12 pr-12 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
-                    password && !passwordValid ? "border-amber-500/50 focus:ring-amber-600/10" : passwordValid ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
-                  }`}
-                />
-                <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500 transition-colors" tabIndex={-1}>
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirmar contraseña */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Confirmar contraseña</label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full pl-12 pr-12 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
-                    confirmPassword && password !== confirmPassword ? "border-red-600/50 focus:ring-red-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
-                  }`}
-                />
-                <button type="button" onClick={() => setShowConfirmPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500 transition-colors" tabIndex={-1}>
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {confirmPassword && password !== confirmPassword && <p className="text-[10px] text-red-400 mt-1 ml-1">Las contraseñas no coinciden</p>}
-            </div>
-
-            {/* Indicador de fortaleza */}
-            {password && (
-              <div className="bg-[#FFFFFF] rounded-xl border border-[#DEE2E6] p-3 space-y-1.5">
-                <p className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest">Requisitos de seguridad</p>
-                {PASSWORD_RULES.map((rule, i) => {
-                  const ok = rule.re.test(password);
-                  return (
-                    <div key={i} className="flex items-center gap-2">
-                      {ok ? <CheckCircle2 size={10} className="text-emerald-500 shrink-0" /> : <XCircle size={10} className="text-amber-500 shrink-0" />}
-                      <span className={`text-[10px] ${ok ? "text-emerald-500" : "text-[#6C757D]"}`}>{rule.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
 
             {/* Términos */}
             <div className="flex items-start gap-3 px-1 py-2">

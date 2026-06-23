@@ -308,6 +308,7 @@ const CustomerRegistrationModal = ({
   onClose,
   onSubmit,
   onDocumentBlur,
+  documentTypes,
 }) => {
   if (!isOpen) return null;
 
@@ -353,8 +354,21 @@ const CustomerRegistrationModal = ({
               className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
             >
               <option value="">Seleccionar...</option>
-              <option value="1">Cedula de Ciudadania</option>
-              <option value="2">NIT</option>
+              {documentTypes && documentTypes.length > 0 ? (
+                documentTypes.map((dt) => {
+                  const val = dt.idTipoDocumento || dt.id || dt.id_tipo_documento;
+                  return (
+                    <option key={val} value={val}>
+                      {dt.descripcion || dt.nombre} ({dt.sigla})
+                    </option>
+                  );
+                })
+              ) : (
+                <>
+                  <option value="1">Cedula de Ciudadania</option>
+                  <option value="2">NIT</option>
+                </>
+              )}
             </select>
           </label>
 
@@ -657,6 +671,7 @@ export default function CartPage() {
   const showSuccessToast = (title, message) => {
     setSuccessToastConfig({ visible: true, title, message });
   };
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [municipalities, setMunicipalities] = useState([]);
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false);
@@ -694,6 +709,18 @@ export default function CartPage() {
       .then((response) => (response.ok ? response.json() : []))
       .then((payload) => setDepartments(extractList(payload)))
       .catch(() => setDepartments([]));
+  }, [customerModalOpen]);
+
+  useEffect(() => {
+    if (!customerModalOpen) return;
+
+    fetch(`${API_BASE_URL}/tipo-documento`)
+      .then((response) => (response.ok ? response.json() : []))
+      .then((payload) => {
+        const list = Array.isArray(payload) ? payload : (payload && payload.data) || [];
+        setDocumentTypes(list);
+      })
+      .catch(() => setDocumentTypes([]));
   }, [customerModalOpen]);
 
   useEffect(() => {
@@ -1400,6 +1427,7 @@ export default function CartPage() {
         }}
         onSubmit={handleCustomerSubmit}
         onDocumentBlur={handleDocumentBlur}
+        documentTypes={documentTypes}
       />
 
       <SellerCustomerSelectModal

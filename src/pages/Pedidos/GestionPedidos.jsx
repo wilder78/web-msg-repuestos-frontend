@@ -156,6 +156,12 @@ const GestionPedidos = () => {
     const [adminError, setAdminError] = useState("");
     const [adminLoading, setAdminLoading] = useState(false);
 
+    const [statusConfirm, setStatusConfirm] = useState({
+        open: false,
+        pedido: null,
+        nextStatus: null,
+    });
+
     const [toastConfig, setToastConfig] = useState({
         visible: false,
         title: "",
@@ -279,7 +285,29 @@ const GestionPedidos = () => {
             return;
         }
 
+        if ([1, 2, 3, 4].includes(Number(nextStatus))) {
+            setStatusConfirm({
+                open: true,
+                pedido,
+                nextStatus
+            });
+            return;
+        }
+
         await updatePedidoStatus(pedido, nextStatus);
+    };
+
+    const handleConfirmStatusChange = async () => {
+        const { pedido, nextStatus } = statusConfirm;
+        setStatusConfirm({ open: false, pedido: null, nextStatus: null });
+        setActionLoading(true);
+        try {
+            await updatePedidoStatus(pedido, nextStatus);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     const closeAdminStatusModal = () => {
@@ -864,6 +892,23 @@ const GestionPedidos = () => {
                 }
                 variant="danger"
                 error={deleteError}
+            />
+
+            <ConfirmActionModal
+                isOpen={statusConfirm.open}
+                onClose={() => setStatusConfirm({ open: false, pedido: null, nextStatus: null })}
+                onConfirm={handleConfirmStatusChange}
+                loading={actionLoading}
+                title={statusConfirm.nextStatus === 3 ? "Cancelar Pedido" : "Cambiar Estado de Pedido"}
+                description="Esta acción es irreversible"
+                alertMessage={
+                    statusConfirm.nextStatus === 3
+                        ? "¿Está seguro de que desea cancelar este pedido? Esta acción modificará el inventario y no se puede deshacer."
+                        : "¿Está seguro de cambiar el estado de este pedido? Recuerde que esta acción es irreversible y no podrá revertir el pedido al estado anterior."
+                }
+                variant={statusConfirm.nextStatus === 3 ? "danger" : "warning"}
+                itemName={statusConfirm.pedido ? `Pedido #${statusConfirm.pedido.idPedido || statusConfirm.pedido.id_pedido}` : ""}
+                itemSubtitle={statusConfirm.pedido?.clienteNombre || statusConfirm.pedido?.nombreCliente || "Cliente"}
             />
 
             <PrintableDocument

@@ -169,6 +169,12 @@ A lo largo de las últimas actualizaciones, se han incorporado múltiples mejora
    - Corrección del guardián del módulo administrativo de compras (`GestionCompras.jsx`), reemplazando la verificación del permiso incorrecto `"COMPRAS_ACCESS"` por el real de base de datos `"Listar Compras"`, permitiendo el acceso a perfiles autorizados como `Administrador`.
    - Prevención de desbordamiento en el pool de conexiones del servidor/DB mediante la reestructuración a guardado secuencial (`for...of`) en los procesos de selección masiva de permisos de roles.
 
+8. **Optimización del Flujo de Registro y Gestión Geográfica:**
+   - Unificación del registro de usuarios y datos de facturación de clientes en un solo paso inicial (`RegisterModal`), reduciendo la fricción en el carrito.
+   - Captura obligatoria de **Departamento** y **Municipio / Ciudad** con selectores en cascada conectados a los endpoints geográficos del backend.
+   - Validación en tiempo real (debounced de 500ms) de la disponibilidad del número de documento y tipo contra la base de datos para prevenir registros duplicados.
+   - Protección y bloqueo dinámico en el control de estado de pedidos en bodega (`PedidoTable`): las transiciones a los estados subsiguientes de "Despachado" o "Entregado" se inhabilitan automáticamente si el pedido cuenta con alertas de *Stock Insuficiente*.
+
 ---
 
 ## Estándares de UI/UX — Reglas Obligatorias
