@@ -69,7 +69,7 @@ const TableHead = React.forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     data-slot="table-head"
     className={cn(
-      "h-10 px-2 text-left align-middle font-medium text-slate-500 dark:text-white whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+      "h-10 px-2 text-left align-middle font-bold text-slate-400 dark:text-slate-200 text-[11px] tracking-wider whitespace-nowrap [&:has([role=checkbox])]:pr-0",
       className
     )}
     {...props}

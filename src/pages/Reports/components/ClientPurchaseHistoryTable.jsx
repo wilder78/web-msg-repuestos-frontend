@@ -55,22 +55,22 @@ export function ClientPurchaseHistoryTable({
       <Table>
         <TableHeader className="bg-slate-50/50 dark:bg-zinc-800/40">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[80px] px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">
+            <TableHead className="w-[80px] px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">
               Avatar
             </TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">
               Cliente / Documento
             </TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">
               Contacto
             </TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider text-center">
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider text-center">
               Pedidos Realizados
             </TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider text-right">
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider text-right">
               Total Invertido
             </TableHead>
-            <TableHead className="px-6 py-4 text-right text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider pr-10">
+            <TableHead className="px-6 py-4 text-right text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider pr-10">
               Acción
             </TableHead>
           </TableRow>

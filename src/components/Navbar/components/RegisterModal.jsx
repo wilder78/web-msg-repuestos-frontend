@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, FileText, Phone, MapPin } from "lucide-react";
+import SuccessToast from "../../ui/SuccessToast";
 
 const API = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
@@ -18,10 +19,15 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailStatus, setEmailStatus] = useState(null);
-  const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const emailTimer = useRef(null);
+
+  const [toast, setToast] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "success"
+  });
 
   // Campos adicionales para cliente
   const [documentTypes, setDocumentTypes] = useState([]);
@@ -29,6 +35,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   const [numeroDocumento, setNumeroDocumento] = useState("");
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
+  const [razonSocial, setRazonSocial] = useState("");
+  const [personaContacto, setPersonaContacto] = useState("");
 
   // Ubicación geógrafica
   const [departments, setDepartments] = useState([]);
@@ -151,21 +159,30 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
   if (!isOpen) return null;
 
+  const showToast = (message, type = "error") => {
+    setToast({
+      visible: true,
+      title: type === "error" ? "Error de Validación" : "Registro exitoso",
+      message,
+      type
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccessMsg("");
 
-    if (!nombre.trim()) { setError("El nombre es obligatorio"); return; }
-    if (!numeroDocumento.trim()) { setError("El número de documento es obligatorio"); return; }
-    if (documentStatus === "taken") { setError(`El documento ya está registrado a nombre de ${documentOwner || "otro cliente"}.`); return; }
-    if (!idDepartamento) { setError("El departamento es obligatorio"); return; }
-    if (!municipioId) { setError("El municipio es obligatorio"); return; }
-    if (!telefono.trim()) { setError("El teléfono de contacto es obligatorio"); return; }
-    if (!direccion.trim()) { setError("La dirección es obligatoria"); return; }
-    if (password !== confirmPassword) { setError("Las contraseñas no coinciden"); return; }
-    if (!passwordValid) { setError("La contraseña no cumple los requisitos de seguridad"); return; }
-    if (emailStatus === "taken") { setError("Este correo ya está registrado"); return; }
+    if (!nombre.trim()) { showToast("El nombre es obligatorio"); return; }
+    if (!razonSocial.trim()) { showToast("La Razón Social / Nombre Comercial es obligatorio"); return; }
+    if (!personaContacto.trim()) { showToast("La Persona de Contacto es obligatoria"); return; }
+    if (!numeroDocumento.trim()) { showToast("El número de documento es obligatorio"); return; }
+    if (documentStatus === "taken") { showToast(`El documento ya está registrado a nombre de ${documentOwner || "otro cliente"}.`); return; }
+    if (!idDepartamento) { showToast("El departamento es obligatorio"); return; }
+    if (!municipioId) { showToast("El municipio es obligatorio"); return; }
+    if (!telefono.trim()) { showToast("El teléfono de contacto es obligatorio"); return; }
+    if (!direccion.trim()) { showToast("La dirección es obligatoria"); return; }
+    if (password !== confirmPassword) { showToast("Las contraseñas no coinciden"); return; }
+    if (!passwordValid) { showToast("La contraseña no cumple los requisitos de seguridad"); return; }
+    if (emailStatus === "taken") { showToast("Este correo ya está registrado"); return; }
 
     setSubmitting(true);
     try {
@@ -174,42 +191,60 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nombreUsuario: nombre.trim(),
+          nombre_usuario: nombre.trim(),
           email,
+          emailCliente: email,
+          email_cliente: email,
+          clienteEmail: email,
+          cliente_email: email,
           password,
+          password_hash: password,
           idRol: 4,
           idEstado: 1,
+          id_estado: 1,
           idTipoDocumento: parseInt(idTipoDocumento, 10),
           numeroDocumento: numeroDocumento.trim(),
           direccion: direccion.trim(),
           telefono: telefono.trim(),
           municipioId: parseInt(municipioId, 10),
+          razonSocial: razonSocial.trim(),
+          razon_social: razonSocial.trim(),
+          personaContacto: personaContacto.trim(),
+          persona_contacto: personaContacto.trim(),
+          cupoCredito: 0.0,
+          cupo_credito: 0.0,
+          tipoCliente: "Consumidor final",
+          tipo_cliente: "Consumidor final"
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al registrar");
 
-      if (data.message && (data.message.includes("activar") || data.message.includes("activación"))) {
-        setSuccessMsg(data.message);
-        setNombre("");
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        setNumeroDocumento("");
-        setTelefono("");
-        setDireccion("");
-        setIdDepartamento("");
-        setMunicipalities([]);
-        setMunicipioId("");
-        setDocumentStatus(null);
-        setDocumentOwner("");
-        setEmailStatus(null);
-        return;
-      }
+      showToast("Registro exitoso. Redirigiendo...", "success");
 
-      if (onRegisterSuccess) onRegisterSuccess(data);
-      onClose();
+      setNombre("");
+      setRazonSocial("");
+      setPersonaContacto("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setNumeroDocumento("");
+      setTelefono("");
+      setDireccion("");
+      setIdDepartamento("");
+      setMunicipalities([]);
+      setMunicipioId("");
+      setDocumentStatus(null);
+      setDocumentOwner("");
+      setEmailStatus(null);
+
+      setTimeout(() => {
+        if (onRegisterSuccess) onRegisterSuccess(data);
+        onSwitchToLogin();
+      }, 1500);
+
     } catch (err) {
-      setError(err.message);
+      showToast(err.message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -250,31 +285,66 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             <p className="text-[#6C757D] text-sm mt-1 px-2">Únete a la comunidad líder en repuestos y accesorios</p>
           </header>
 
-          <form className="bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6] flex flex-col gap-4" onSubmit={handleSubmit}>
-            {error && (
-              <div className="p-3 bg-red-600/10 border border-red-600/50 rounded-xl text-red-500 text-xs text-center font-bold">{error}</div>
-            )}
-            {successMsg && (
-              <div className="p-3 bg-emerald-600/10 border border-emerald-600/50 rounded-xl text-emerald-500 text-xs text-center font-bold">{successMsg}</div>
-            )}
+          <form className="bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6] flex flex-col gap-5" onSubmit={handleSubmit}>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* --- COLUMNA 1: Datos Personales/Cliente --- */}
-              <div className="space-y-4">
-                <p className="text-[11px] font-bold text-red-600 uppercase tracking-widest border-b border-[#DEE2E6] pb-1">Datos de Facturación</p>
+            {/* --- DATOS DE FACTURACIÓN (Cliente) --- */}
+            <div className="space-y-4">
+              <p className="text-[11px] font-bold text-red-600 border-b border-[#DEE2E6] pb-1 tracking-wider">Datos de Facturación</p>
 
-                {/* Nombre */}
+              {/* Fila 1: Razón Social / Nombre Comercial & Persona de Contacto */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Nombre completo</label>
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Razón Social / Nombre Comercial</label>
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Juan Pérez" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
+                    <input type="text" value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} placeholder="Ej: Repuestos El Motor" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
                   </div>
                 </div>
 
-                {/* Tipo de Documento */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Tipo de documento</label>
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Persona de Contacto</label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input type="text" value={personaContacto} onChange={(e) => setPersonaContacto(e.target.value)} placeholder="Ej: Juan Pérez" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Fila 2: Teléfono de contacto y Dirección de entrega */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Teléfono de contacto</label>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="Ej: 3001234567"
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Dirección de entrega</label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      value={direccion}
+                      onChange={(e) => setDireccion(e.target.value)}
+                      placeholder="Ej: Calle 50 #10-20"
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Fila 3: Tipo de Documento y Número de Documento */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5 sm:col-span-1">
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Tipo de documento</label>
                   <div className="relative group">
                     <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                     <select
@@ -302,9 +372,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   </div>
                 </div>
 
-                {/* Número de Documento */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Número de documento</label>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Número de documento</label>
                   <div className="relative group">
                     <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                     <input
@@ -325,40 +394,12 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   {documentStatus === "taken" && <p className="text-[10px] text-red-500 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Documento registrado a nombre de {documentOwner || "otro cliente"}</p>}
                   {documentStatus === "available" && <p className="text-[10px] text-emerald-500 mt-1 ml-1">Documento disponible</p>}
                 </div>
+              </div>
 
-                {/* Teléfono */}
+              {/* Fila 4: Departamento y Municipio */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Teléfono de contacto</label>
-                  <div className="relative group">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                    <input
-                      type="text"
-                      value={telefono}
-                      onChange={(e) => setTelefono(e.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="Ej: 3001234567"
-                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Dirección */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Dirección de entrega</label>
-                  <div className="relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                    <input
-                      type="text"
-                      value={direccion}
-                      onChange={(e) => setDireccion(e.target.value)}
-                      placeholder="Ej: Calle 50 #10-20"
-                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Departamento */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Departamento</label>
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Departamento</label>
                   <div className="relative group">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                     <select
@@ -379,9 +420,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   </div>
                 </div>
 
-                {/* Municipio / Ciudad */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Municipio / Ciudad</label>
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Municipio / Ciudad</label>
                   <div className="relative group">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                     <select
@@ -403,14 +443,24 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* --- COLUMNA 2: Credenciales de Cuenta --- */}
-              <div className="space-y-4">
-                <p className="text-[11px] font-bold text-red-600 uppercase tracking-widest border-b border-[#DEE2E6] pb-1">Credenciales de Usuario</p>
+            {/* --- CREDENCIALES DE USUARIO (Usuario) --- */}
+            <div className="border-t border-[#DEE2E6] pt-6 mt-2 bg-gray-50/70 -mx-6 px-6 pb-2 rounded-b-2xl">
+              <p className="text-[11px] font-bold text-red-600 pb-3 tracking-wider">Credenciales de Usuario</p>
 
-                {/* Email */}
+              {/* Fila 1: Nombre de usuario & Correo electrónico */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Correo electrónico</label>
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Nombre de usuario</label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: juanperez12" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Correo electrónico</label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                     <input
@@ -433,10 +483,12 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   {emailStatus === "inactive" && <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Registrado pero sin activar. Regístrate para recibir otro enlace.</p>}
                   {emailStatus === "available" && <p className="text-[10px] text-emerald-400 mt-1 ml-1">Correo disponible</p>}
                 </div>
+              </div>
 
-                {/* Contraseña */}
+              {/* Fila 2: Contraseña & Confirmar contraseña */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Contraseña</label>
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Contraseña</label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                     <input
@@ -454,9 +506,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   </div>
                 </div>
 
-                {/* Confirmar contraseña */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest ml-1">Confirmar contraseña</label>
+                  <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Confirmar contraseña</label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                     <input
@@ -474,27 +525,27 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   </div>
                   {confirmPassword && password !== confirmPassword && <p className="text-[10px] text-red-400 mt-1 ml-1">Las contraseñas no coinciden</p>}
                 </div>
-
-                {/* Indicador de fortaleza */}
-                {password && (
-                  <div className="bg-[#FFFFFF] rounded-xl border border-[#DEE2E6] p-3 space-y-1.5">
-                    <p className="text-[10px] font-bold text-[#343A40] uppercase tracking-widest">Requisitos de seguridad</p>
-                    {PASSWORD_RULES.map((rule, i) => {
-                      const ok = rule.re.test(password);
-                      return (
-                        <div key={i} className="flex items-center gap-2">
-                          {ok ? <CheckCircle2 size={10} className="text-emerald-500 shrink-0" /> : <XCircle size={10} className="text-amber-500 shrink-0" />}
-                          <span className={`text-[10px] ${ok ? "text-emerald-500" : "text-[#6C757D]"}`}>{rule.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
+
+              {/* Indicador de fortaleza */}
+              {password && (
+                <div className="bg-[#FFFFFF] rounded-xl border border-[#DEE2E6] p-3 mt-4 space-y-1.5">
+                  <p className="text-[10px] font-bold text-[#343A40] tracking-wider">Requisitos de seguridad</p>
+                  {PASSWORD_RULES.map((rule, i) => {
+                    const ok = rule.re.test(password);
+                    return (
+                      <div key={i} className="flex items-center gap-2">
+                        {ok ? <CheckCircle2 size={10} className="text-emerald-500 shrink-0" /> : <XCircle size={10} className="text-amber-500 shrink-0" />}
+                        <span className={`text-[10px] ${ok ? "text-emerald-500" : "text-[#6C757D]"}`}>{rule.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Términos */}
-            <div className="flex items-start gap-3 px-1 py-2">
+            <div className="flex items-start gap-3 px-1 py-1">
               <input type="checkbox" required className="mt-1 w-4 h-4 rounded border-[#DEE2E6] bg-[#FFFFFF] text-red-600 focus:ring-red-500/50 cursor-pointer" />
               <p className="text-[10px] text-[#343A40] leading-tight">
                 Acepto los <span className="text-red-600 cursor-pointer hover:text-red-500 transition-colors font-bold">Términos de servicio</span> y la{" "}
@@ -528,6 +579,13 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
           </div>
         </div>
       </div>
+      <SuccessToast
+        visible={toast.visible}
+        title={toast.title}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, visible: false }))}
+      />
     </div>
   );
 };

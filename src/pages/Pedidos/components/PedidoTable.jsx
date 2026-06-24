@@ -132,11 +132,11 @@ const PedidoTable = ({
       <Table>
         <TableHeader className="bg-slate-50/50 dark:bg-zinc-800/40">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="h-12 px-2 text-left text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">ID Pedido</TableHead>
-            <TableHead className="h-12 px-2 text-left text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Nombre</TableHead>
-            <TableHead className="h-12 px-2 text-left text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Fecha</TableHead>
-            <TableHead className="h-12 px-2 text-left text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Estado</TableHead>
-            <TableHead className="h-12 px-2 text-right text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Acciones</TableHead>
+            <TableHead className="h-12 px-2 text-left text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">ID Pedido</TableHead>
+            <TableHead className="h-12 px-2 text-left text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Nombre</TableHead>
+            <TableHead className="h-12 px-2 text-left text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Fecha</TableHead>
+            <TableHead className="h-12 px-2 text-left text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Estado</TableHead>
+            <TableHead className="h-12 px-2 text-right text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Acciones</TableHead>
           </TableRow>
         </TableHeader>
 

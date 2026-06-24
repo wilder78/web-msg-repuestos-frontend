@@ -44,12 +44,12 @@ export default function ReturnTable({ data, loading, getAvatarColor, getInitials
             <Table>
                 <TableHeader className="bg-slate-50/50 dark:bg-zinc-800/40">
                     <TableRow className="hover:bg-transparent border-none">
-                        <TableHead className="pl-6 w-[140px] text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Folio Evento</TableHead>
-                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Factura Base</TableHead>
-                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Cliente Involucrado</TableHead>
-                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Ítems Reingresados (Kardex)</TableHead>
-                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Estado / Motivo</TableHead>
-                        <TableHead className="text-right pr-6 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Acciones</TableHead>
+                        <TableHead className="pl-6 w-[140px] text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Folio Evento</TableHead>
+                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Factura Base</TableHead>
+                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Cliente Involucrado</TableHead>
+                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Ítems Reingresados (Kardex)</TableHead>
+                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Estado / Motivo</TableHead>
+                        <TableHead className="text-right pr-6 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

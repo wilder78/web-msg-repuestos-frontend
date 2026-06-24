@@ -47,11 +47,11 @@ const CreditTable = ({
             <Table>
                 <TableHeader className="bg-slate-50/50 dark:bg-zinc-800/40">
                     <TableRow className="hover:bg-transparent border-none">
-                        <TableHead className="pl-6 w-[130px] text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Crédito ID</TableHead>
-                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Cliente</TableHead>
-                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Límite Aprobado</TableHead>
-                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Estado</TableHead>
-                        <TableHead className="text-right pr-6 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Acciones</TableHead>
+                        <TableHead className="pl-6 w-[130px] text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Crédito ID</TableHead>
+                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Cliente</TableHead>
+                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Límite Aprobado</TableHead>
+                        <TableHead className="text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Estado</TableHead>
+                        <TableHead className="text-right pr-6 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

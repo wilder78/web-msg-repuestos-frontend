@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { ClipboardList, CreditCard, PackageCheck, Printer, ReceiptText, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import TablePagination from "../../components/shared/TablePagination";
 import Navbar from "../../components/Navbar/PublicNavbar";
 import Footer from "../../components/Footer/Footer";
 import WhatsAppButton from "../../components/shared/WhatsAppButton";
@@ -805,49 +806,11 @@ export default function OrderHistoryPage() {
               </div>
 
               {/* Footer de Paginación */}
-              {totalPages > 1 && (
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 pt-6">
-                  <p className="text-xs font-medium text-slate-500">
-                    Mostrando <span className="font-semibold text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> a{" "}
-                    <span className="font-semibold text-slate-800">
-                      {Math.min(currentPage * itemsPerPage, filteredOrders.length)}
-                    </span>{" "}
-                    de <span className="font-semibold text-slate-800">{filteredOrders.length}</span> registros
-                  </p>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-100 bg-slate-50/50 p-1">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="rounded-full p-1.5 text-slate-500 transition-all hover:bg-white hover:text-slate-700 hover:shadow-sm disabled:pointer-events-none disabled:opacity-40"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                      <button
-                        key={pageNum}
-                        type="button"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`min-w-8 h-8 rounded-full text-xs font-semibold transition-all ${
-                          currentPage === pageNum
-                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                            : "text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className="rounded-full p-1.5 text-slate-500 transition-all hover:bg-white hover:text-slate-700 hover:shadow-sm disabled:pointer-events-none disabled:opacity-40"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </>
           )}
         </section>

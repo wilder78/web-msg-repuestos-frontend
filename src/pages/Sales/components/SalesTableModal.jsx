@@ -29,11 +29,11 @@ export default function SalesTableModal({ ventas = [], onView, onPdf }) {
       <Table>
         <TableHeader className="bg-slate-50/50 dark:bg-zinc-800/40">
           <TableRow className="hover:bg-transparent border-none">
-            <TableHead className="px-6 py-4 whitespace-nowrap text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">ID Venta</TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Cliente / Razón Social</TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Fecha Consolidación</TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Valor de Venta</TableHead>
-            <TableHead className="px-6 py-4 text-center text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">Acciones</TableHead>
+            <TableHead className="px-6 py-4 whitespace-nowrap text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">ID Venta</TableHead>
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Cliente / Razón Social</TableHead>
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Fecha Consolidación</TableHead>
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Valor de Venta</TableHead>
+            <TableHead className="px-6 py-4 text-center text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

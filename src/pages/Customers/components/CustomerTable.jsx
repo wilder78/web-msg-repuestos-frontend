@@ -51,22 +51,22 @@ export function CustomerTable({
       <Table>
         <TableHeader className="bg-slate-50/50 dark:bg-zinc-800/40">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[80px] px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">
+            <TableHead className="w-[80px] px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">
               Foto
             </TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">
               Cliente
             </TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">
               Contacto
             </TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider">
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider">
               Tipo
             </TableHead>
-            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider text-center">
+            <TableHead className="px-6 py-4 text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider text-center">
               Estado
             </TableHead>
-            <TableHead className="px-6 py-4 text-right text-slate-400 dark:text-slate-200 font-bold uppercase text-[11px] tracking-wider pr-10">
+            <TableHead className="px-6 py-4 text-right text-slate-400 dark:text-slate-200 font-bold text-[11px] tracking-wider pr-10">
               Acciones
             </TableHead>
           </TableRow>

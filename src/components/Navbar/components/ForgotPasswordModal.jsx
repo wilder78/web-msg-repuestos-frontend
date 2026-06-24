@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { X, Mail, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useForgotPassword } from "../../../hooks/useForgotPassword";
 
 export const ForgotPasswordModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const { state, actions } = useForgotPassword();
+  const [emailFocused, setEmailFocused] = useState(false);
 
   if (!isOpen) return null;
 
@@ -33,14 +34,14 @@ export const ForgotPasswordModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 rounded-3xl blur opacity-20"></div>
 
         {/* CARD */}
-        <div className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="relative bg-[#FFFFFF] border border-[#DEE2E6] rounded-3xl shadow-2xl overflow-hidden">
           {/* Barra superior */}
-          <div className="h-1.5 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500"></div>
+          <div className="h-1 bg-gradient-to-r from-red-600 to-orange-500"></div>
 
           {/* Botón cerrar */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-red-400 transition"
+            className="absolute top-4 right-4 text-[#343A40] hover:bg-black/5 p-1 rounded-full transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -54,49 +55,59 @@ export const ForgotPasswordModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 className="w-20 h-20 mx-auto mb-4 rounded-xl border border-red-500/40 shadow-md"
               />
 
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-[#343A40]">
                 ¿Olvidaste tu contraseña?
               </h2>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-[#6C757D] text-sm mt-1">
                 Ingresa tu correo y te enviaremos las instrucciones de recuperación.
               </p>
             </div>
 
             {state.success ? (
               <div className="space-y-6 text-center animate-fadeScale">
-                <div className="bg-emerald-500/10 border border-emerald-500/40 p-4 rounded-2xl flex flex-col items-center gap-3">
-                  <CheckCircle2 className="text-emerald-400 w-12 h-12" />
-                  <p className="text-emerald-300 text-sm font-medium">
+                <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex flex-col items-center gap-3">
+                  <CheckCircle2 className="text-emerald-600 w-12 h-12" />
+                  <p className="text-emerald-800 text-sm font-medium">
                     ¡Correo enviado con éxito!
                   </p>
-                  <p className="text-gray-400 text-xs">
+                  <p className="text-gray-600 text-xs">
                     Revisa tu bandeja de entrada (y la carpeta de spam) para seguir el enlace de recuperación.
                   </p>
                 </div>
 
                 <button
                   onClick={onSwitchToLogin}
-                  className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-600 to-orange-500 hover:scale-[1.02] active:scale-[0.97] transition shadow-lg shadow-red-500/30"
+                  className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-600 to-orange-500 hover:scale-[1.02] active:scale-[0.97] transition shadow-lg shadow-red-500/30 cursor-pointer"
                 >
                   Volver al inicio de sesión
                 </button>
               </div>
             ) : (
               /* FORM */
-              <form onSubmit={actions.handleForgotPassword} className="space-y-5">
+              <form onSubmit={actions.handleForgotPassword} className="space-y-5 bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6]">
                 {/* EMAIL */}
                 <div>
-                  <label className="text-sm text-gray-300">
+                  <label className="text-sm text-[#343A40] font-medium">
                     Correo electrónico
                   </label>
-                  <div className="relative mt-1">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <div
+                    className={`relative mt-1 transition ${
+                      emailFocused ? "scale-[1.02]" : ""
+                    }`}
+                  >
+                    <Mail
+                      className={`absolute left-3 top-1/2 -translate-y-1/2 transition ${
+                        emailFocused ? "text-red-500" : "text-[#6C757D]"
+                      }`}
+                    />
                     <input
                       type="email"
                       value={state.email}
                       placeholder="ejemplo@correo.com"
-                      className="w-full pl-10 pr-4 py-3 bg-black/40 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
+                      className="w-full pl-10 pr-4 py-3 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl text-[#343A40] placeholder-[#6C757D] focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
                       onChange={(e) => actions.setEmail(e.target.value)}
+                      onFocus={() => setEmailFocused(true)}
+                      onBlur={() => setEmailFocused(false)}
                       required
                     />
                   </div>
@@ -105,8 +116,8 @@ export const ForgotPasswordModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 {/* ERROR */}
                 {state.error && (
                   <div className="bg-red-500/10 border border-red-500/40 p-3 rounded-xl flex gap-2">
-                    <AlertCircle className="text-red-400 shrink-0" />
-                    <p className="text-red-300 text-sm">{state.error}</p>
+                    <AlertCircle className="text-red-500 shrink-0" />
+                    <p className="text-red-600 text-sm">{state.error}</p>
                   </div>
                 )}
 
@@ -114,7 +125,7 @@ export const ForgotPasswordModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 <button
                   type="submit"
                   disabled={state.loading}
-                  className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-600 to-orange-500 hover:scale-[1.02] active:scale-[0.97] transition shadow-lg shadow-red-500/30 animate-pulse-slow"
+                  className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-600 to-orange-500 hover:scale-[1.02] active:scale-[0.97] transition shadow-lg shadow-red-500/30 cursor-pointer"
                 >
                   <div className="flex justify-center items-center gap-2">
                     {state.loading ? (
@@ -129,12 +140,12 @@ export const ForgotPasswordModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 </button>
 
                 {/* BACK TO LOGIN */}
-                <p className="text-center text-sm text-gray-400 mt-4">
+                <p className="text-center text-sm text-[#6C757D] mt-4">
                   ¿Te acordaste?{" "}
                   <button
                     type="button"
                     onClick={onSwitchToLogin}
-                    className="text-red-400 hover:underline font-medium"
+                    className="text-red-600 hover:text-red-500 font-semibold hover:underline cursor-pointer"
                   >
                     Inicia sesión
                   </button>

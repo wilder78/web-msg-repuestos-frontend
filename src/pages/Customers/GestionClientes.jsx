@@ -5,6 +5,7 @@ import { Users, Search } from "lucide-react";
 import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import SuccessToast from "../../components/ui/SuccessToast";
+import TablePagination from "../../components/shared/TablePagination";
 import PageHeader from "../../components/shared/PageHeader";
 import { CustomerTable } from "./components/CustomerTable";
 import { CustomerCreateModal } from "./components/CustomerCreateModal";
@@ -376,37 +377,11 @@ export default function GestionClientes() {
           authFetch={authFetch}
         />
 
-        {showPagination && (
-          <div className="p-4 bg-slate-50/50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-700/60 flex justify-center items-center gap-4 text-sm font-bold text-slate-600 dark:text-zinc-400">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-              className="disabled:opacity-50 disabled:cursor-not-allowed hover:text-slate-900 dark:hover:text-white"
-            >
-              Anterior
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1.5 rounded-lg border shadow-sm ${
-                  page === currentPage
-                    ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50"
-                    : "bg-white dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-700 hover:text-slate-800 dark:hover:text-white"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="disabled:opacity-50 disabled:cursor-not-allowed hover:text-slate-900 dark:hover:text-white"
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </Card>
 
       {/* ✅ Modal de Detalles del Cliente */}
