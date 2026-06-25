@@ -22,8 +22,17 @@ const EMPTY_CUSTOMER_FORM = {
   municipio_id: "",
 };
 
-const parseCartPrice = (price) =>
-  parseFloat(String(price).replace(/[^0-9.]/g, "")) || 0;
+const formatter = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "COP",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+const parseCartPrice = (price) => {
+  const clean = String(price).replace(/[^0-9,.]/g, "");
+  return parseFloat(clean.replace(/[,.]/g, "")) || 0;
+};
 
 const extractList = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -261,7 +270,7 @@ const CartItem = ({ item }) => {
       <div className="flex-shrink-0 text-right hidden sm:block min-w-[90px]">
         <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wide">Subtotal</p>
         <p className="text-base font-extrabold text-slate-900">
-          S/ {subtotal.toFixed(2)}
+          {formatter.format(subtotal)}
         </p>
       </div>
 
@@ -1366,11 +1375,11 @@ export default function CartPage() {
                 <div className="space-y-3 mb-5">
                   <div className="flex justify-between text-sm text-slate-600">
                     <span>Subtotal</span>
-                    <span className="font-semibold">S/ {cartTotal.toFixed(2)}</span>
+                    <span className="font-semibold">{formatter.format(cartTotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-slate-600">
                     <span>IVA (19%)</span>
-                    <span className="font-semibold">S/ {iva.toFixed(2)}</span>
+                    <span className="font-semibold">{formatter.format(iva)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-slate-400 italic">
                     <span>Envío</span>
@@ -1382,7 +1391,7 @@ export default function CartPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-base font-bold text-slate-900">Total</span>
                     <span className="text-2xl font-extrabold text-blue-600">
-                      S/ {totalGeneral.toFixed(2)}
+                      {formatter.format(totalGeneral)}
                     </span>
                   </div>
                 </div>
@@ -1491,7 +1500,7 @@ export default function CartPage() {
               <div className="flex justify-between text-xs text-slate-500">
                 <span>Total de Compra</span>
                 <span className="font-extrabold text-blue-600">
-                  S/ {(confirmedOrderDetails?.total ?? 0).toFixed(2)}
+                  {formatter.format(confirmedOrderDetails?.total ?? 0)}
                 </span>
               </div>
               <div className="flex justify-between text-[11px] text-slate-400 italic">

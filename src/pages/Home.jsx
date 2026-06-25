@@ -8,9 +8,10 @@ import CardCarousel from "../components/shared/CardCarousel";
 import BestSellersCarousel from "../components/shared/BestSellersCarousel";
 import LuxuryAccessoriesCarousel from "../components/shared/LuxuryAccessoriesCarousel";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Loader2 } from "lucide-react";
-import { useCart } from "../contexts/CartContext";
-import { useAuth } from "../hooks/useAuth";
+import { Loader2 } from "lucide-react";
+import ProductCard from "../components/shared/ProductCard";
+
+import { useNovedades } from "../contexts/NovedadesContext";
 
 // Import local brands images
 import logoAx4 from "../assets/marcas/ax4-110.png";
@@ -33,100 +34,14 @@ const marcasCooperativas = [
   { id: 8, name: "Yamaha XTZ", logo: logoXtz },
 ];
 
-const ProductCard = ({ product, showNew = false }) => {
-  const { addToCart } = useCart();
-  const { user } = useAuth();
-
-  const image = product.image || product.imagen_url || "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=500&auto=format&fit=crop&q=60";
-  const rawName = product.name || product.nombre || "Producto";
-  const name = rawName.replace(/\s*\(.*?\)/g, '').replace(/\s*\[.*?\]/g, '').trim();
-
-  // Precio base: siempre precio_publico para invitados o roles != 4
-  let priceValue = Number(product.precio_publico || product.precioPublico || product.price || 0);
-
-  if (Number(user?.idRol) === 4 && user?.tipoCliente) {
-    const tipo = user.tipoCliente.toLowerCase();
-    const minoristaPrice = Number(product.precio_minorista || product.precioMinorista || 0);
-    const mayoristaPrice = Number(product.precio_mayorista || product.precioMayorista || 0);
-
-    if (tipo === "minorista" && minoristaPrice > 0) priceValue = minoristaPrice;
-    else if (tipo === "mayorista" && mayoristaPrice > 0) priceValue = mayoristaPrice;
-    // "consumidor final" → precio_publico (ya asignado por defecto)
-  }
-
-  const formatter = new Intl.NumberFormat("es-PE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  const price = `S/ ${formatter.format(priceValue)}`;
-
-  const cartItem = {
-    id: product.id || product.idProducto || product.id_producto,
-    name,
-    price,
-    image,
-    stock: Number(product.stock || product.stockBuenEstado || product.stock_buen_estado || 0),
-  };
-
-  return (
-    <div className="group relative bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:-translate-y-[5px] hover:border-orange-200/50 hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-300 ease-in-out flex flex-col h-full">
-      {(product.esNuevo || product.es_nuevo) && (
-        <span className="absolute top-3 left-3 z-10 rounded-lg bg-gradient-to-r from-orange-600 via-red-500 to-amber-500 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-orange-500/20 animate-pulse">
-          Nuevo
-        </span>
-      )}
-      <div className="relative h-48 overflow-hidden bg-white flex items-center justify-center p-4">
-        <img
-          src={image}
-          alt={name}
-          className="h-full max-h-full w-auto max-w-full object-contain group-hover:scale-105 transition-transform duration-500"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      </div>
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="font-semibold text-slate-800 text-base mb-2 h-12 line-clamp-2 overflow-hidden group-hover:text-orange-600 transition-colors" title={name}>
-          {name}
-        </h3>
-        <div className="mt-auto pt-4">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg font-bold text-slate-900">{price}</span>
-          </div>
-          <button
-            onClick={() => addToCart(cartItem)}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 font-medium text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-orange-600 hover:to-red-500 hover:shadow-lg hover:shadow-orange-500/25 active:scale-95"
-          >
-            <ShoppingCart size={18} />
-            Agregar al Carrito
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
 const Home = () => {
-  const [dbProducts, setDbProducts] = useState([]);
+  const { nuevasNovedades, loading: loadingNovedades } = useNovedades();
   const [topRepuestos, setTopRepuestos] = useState([]);
   const [topAccesorios, setTopAccesorios] = useState([]);
-  const [loadingDb, setLoadingDb] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = () => {
-      fetch(`${API_BASE_URL}/products/latest`)
-        .then((r) => r.json())
-        .then((data) => {
-          const list = Array.isArray(data) ? data : data.products || data.data || data.content || [];
-          const sorted = [...list].sort(
-            (a, b) => (b.id_producto || 0) - (a.id_producto || 0),
-          );
-          setDbProducts(sorted.slice(0, 8));
-        })
-        .catch(() => {})
-        .finally(() => setLoadingDb(false));
-    };
-
     const fetchTopRepuestos = () => {
       fetch(`${API_BASE_URL}/products/home/top-repuestos`)
         .then((r) => r.json())
@@ -147,12 +62,10 @@ const Home = () => {
         .catch((err) => console.error("Error cargando accesorios del Home", err));
     };
 
-    fetchProducts();
     fetchTopRepuestos();
     fetchTopAccesorios();
     
     const interval = setInterval(() => {
-      fetchProducts();
       fetchTopRepuestos();
       fetchTopAccesorios();
     }, 20000); // Poll every 20s
@@ -182,24 +95,24 @@ const Home = () => {
                 </span>
               </div>
             }
-            href="/repuestos"
+            href="/recien-llegados"
             linkLabel="Ver todo"
           />
           <div className="mt-8">
-            {loadingDb ? (
+            {loadingNovedades ? (
               <div className="flex items-center justify-center py-16 text-slate-400">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <span className="ml-2 text-sm">Cargando productos...</span>
               </div>
             ) : (
               <CardCarousel
-                items={dbProducts}
+                items={nuevasNovedades.slice(0, 8)}
                 autoplay={4000}
                 desktopViews={4}
                 tabletViews={2.5}
                 mobileViews={1.25}
                 renderItem={(p) => (
-                  <ProductCard product={p} showNew />
+                  <ProductCard product={p} />
                 )}
               />
             )}

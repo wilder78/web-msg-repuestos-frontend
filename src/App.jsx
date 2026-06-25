@@ -19,6 +19,7 @@ import GestionProductos from "./pages/Products/GestionProductos";
 import GestionRutas from "./pages/FollowUp/GestionRutas";
 import GestionNosotros from "./pages/WebAboutUs/GestionNosotros";
 import GestionProductosWeb from "./pages/WebProducts/GestionProductosWeb";
+import RecienLlegados from "./pages/WebProducts/RecienLlegados";
 import GestionContacto from "./pages/WebContactUs/GestionContacto";
 import GestionPedidos from "./pages/Pedidos/GestionPedidos";
 import GestionCreditos from "./pages/Credits/GestionCreditos";
@@ -303,6 +304,7 @@ export default function App() {
       {/* ─── Rutas Web Públicas ──────────────────────────────────────── */}
       <Route path="/nosotros" element={<GestionNosotros />} />
       <Route path="/repuestos" element={<GestionProductosWeb />} />
+      <Route path="/recien-llegados" element={<RecienLlegados />} />
       <Route path="/contacto" element={<GestionContacto />} />
 
       {/* ─── Manejo de Error 404 ─────────────────────────────────────── */}

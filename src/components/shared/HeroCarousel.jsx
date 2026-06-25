@@ -32,6 +32,15 @@ const slides = [
     href: "/repuestos?categoria=frenos",
     align: "right",
   },
+  {
+    id: 4,
+    image: "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=1600&auto=format&fit=crop&q=80",
+    title: "Hasta 20% de Descuento en accesorios",
+    subtitle: "Aprovecha nuestras ofertas exclusivas en cascos y equipamiento de seguridad.",
+    cta: "Ver Ofertas",
+    href: "/repuestos",
+    align: "left",
+  },
 ];
 
 export default function HeroCarousel() {
@@ -71,14 +80,14 @@ export default function HeroCarousel() {
   const s = slides[current];
 
   const alignClasses = {
-    center: "items-center text-center",
-    left: "items-start text-left",
-    right: "items-end text-right",
+    center: "items-center justify-center text-center",
+    left: "items-center justify-start text-left",
+    right: "items-center justify-end text-right",
   };
 
   return (
     <div
-      className="relative w-full overflow-hidden bg-slate-900"
+      className="relative w-full overflow-hidden bg-slate-900 group"
       onMouseEnter={pause}
       onMouseLeave={resume}
     >
@@ -93,43 +102,52 @@ export default function HeroCarousel() {
               zIndex: i === current ? 1 : 0,
             }}
           >
-            <img
-              src={slide.image}
-              alt={slide.title}
-              className="h-full w-full object-cover"
-              loading={i === 0 ? "eager" : "lazy"}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-transparent" />
+            <div className="relative w-full h-full">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="h-full w-full object-cover"
+                loading={i === 0 ? "eager" : "lazy"}
+              />
+              {/* Capa negra con opacidad hacia el lado izquierdo para resaltar texto */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent z-10" />
+              {/* Gradiente sutil de abajo hacia arriba */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent z-10" />
+            </div>
 
             <div
-              className={`absolute inset-0 flex px-6 sm:px-12 lg:px-20 ${alignClasses[slide.align]}`}
+              className={`absolute inset-0 flex px-6 sm:px-12 lg:px-20 z-20 ${alignClasses[slide.align]}`}
             >
               <div
-                className={`max-w-xl ${
-                  slide.align === "center"
-                    ? "mx-auto"
-                    : slide.align === "right"
-                      ? "ml-auto"
-                      : ""
-                } mt-auto mb-16 sm:mb-20 md:mb-24`}
+                className={`max-w-md md:max-w-lg lg:max-w-xl ${
+                  slide.align === "center" ? "mx-auto" : ""
+                }`}
               >
                 <h2
-                  className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl"
+                  className="text-3xl font-black tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl"
                   style={{
                     opacity: i === current ? 1 : 0,
                     transform: `translateY(${i === current ? "0" : "20px"})`,
                     transition: "opacity 0.6s ease 0.2s, transform 0.6s ease 0.2s",
                   }}
                 >
-                  {slide.title.split(/(solo lugar|Aceites|Rendimiento)/).map((part, idx) =>
-                    ["solo lugar", "Aceites", "Rendimiento"].includes(part) ? (
-                      <span key={idx} className="text-blue-400">
-                        {part}
-                      </span>
-                    ) : (
-                      part
-                    ),
-                  )}
+                  {slide.title.split(/(solo lugar|Aceites|Rendimiento|\d+%\s*de\s*Descuento|\d+%)/i).map((part, idx) => {
+                    if (["solo lugar", "Aceites", "Rendimiento"].includes(part)) {
+                      return (
+                        <span key={idx} className="text-blue-400">
+                          {part}
+                        </span>
+                      );
+                    }
+                    if (/^\d+%/i.test(part)) {
+                      return (
+                        <span key={idx} className="text-red-500 font-extrabold">
+                          {part}
+                        </span>
+                      );
+                    }
+                    return part;
+                  })}
                 </h2>
                 <p
                   className="mt-4 max-w-2xl text-base text-blue-100 sm:text-lg md:text-xl"
@@ -143,7 +161,7 @@ export default function HeroCarousel() {
                 </p>
                 <Link
                   to={slide.href}
-                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 font-bold text-white shadow-lg transition-colors hover:bg-blue-400 hover:shadow-blue-500/30 sm:px-8"
+                  className="mt-6 inline-flex items-center gap-2 rounded-md bg-red-600 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:bg-red-500 hover:scale-105 active:scale-95 shadow-red-600/30 hover:shadow-red-500/40 sm:px-8"
                   style={{
                     opacity: i === current ? 1 : 0,
                     transform: `translateY(${i === current ? "0" : "20px"})`,
@@ -161,14 +179,14 @@ export default function HeroCarousel() {
       {/* Flechas */}
       <button
         onClick={prev}
-        className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/25 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/50 hover:scale-110 active:scale-95"
+        className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/25 p-2 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/50 hover:scale-110 active:scale-95"
         aria-label="Anterior"
       >
         <ChevronLeft size={24} />
       </button>
       <button
         onClick={next}
-        className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/25 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/50 hover:scale-110 active:scale-95"
+        className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/25 p-2 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/50 hover:scale-110 active:scale-95"
         aria-label="Siguiente"
       >
         <ChevronRight size={24} />
@@ -180,10 +198,10 @@ export default function HeroCarousel() {
           <button
             key={i}
             onClick={() => goTo(i)}
-            className={`h-2.5 rounded-full transition-all ${
+            className={`h-1 rounded-full transition-all duration-300 ${
               i === current
-                ? "w-8 bg-white"
-                : "w-2.5 bg-white/40 hover:bg-white/70"
+                ? "w-8 bg-red-600"
+                : "w-5 bg-white/40 hover:bg-white/70"
             }`}
             aria-label={`Ir a slide ${i + 1}`}
           />

@@ -51,9 +51,11 @@ export default function LuxuryAccessoriesCarousel({ products = [] }) {
     );
   }
 
-  const formatter = new Intl.NumberFormat("es-PE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  const formatter = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
 
   return (
@@ -96,7 +98,7 @@ export default function LuxuryAccessoriesCarousel({ products = [] }) {
             if (tipo === "minorista" && minoristaPrice > 0) priceValue = minoristaPrice;
             else if (tipo === "mayorista" && mayoristaPrice > 0) priceValue = mayoristaPrice;
           }
-          const formattedPrice = `S/ ${formatter.format(priceValue)}`;
+          const formattedPrice = formatter.format(priceValue);
 
           const rawName = p.nombre || p.name || "Repuesto";
           const cleanName = rawName.replace(/\s*\(.*?\)/g, "").replace(/\s*\[.*?\]/g, "").trim();

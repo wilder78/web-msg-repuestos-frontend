@@ -7,6 +7,7 @@ import App from "./App.jsx";
 import { handleUnauthorized, handleForbidden } from "./lib/auth-utils";
 import { CartProvider } from "./contexts/CartContext.jsx";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
+import { NovedadesProvider } from "./contexts/NovedadesContext.jsx";
 import DomErrorBoundary from "./components/DomErrorBoundary.jsx";
 
 const originalFetch = window.fetch;
@@ -54,15 +55,17 @@ createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
-            <App />
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              toastOptions={{
-                duration: 5000,
-              }}
-            />
+            <NovedadesProvider>
+              <App />
+              <Toaster
+                position="top-right"
+                richColors
+                closeButton
+                toastOptions={{
+                  duration: 5000,
+                }}
+              />
+            </NovedadesProvider>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>
