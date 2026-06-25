@@ -37,6 +37,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   const [direccion, setDireccion] = useState("");
   const [razonSocial, setRazonSocial] = useState("");
   const [personaContacto, setPersonaContacto] = useState("");
+  const [errors, setErrors] = useState({});
 
   // Ubicación geógrafica
   const [departments, setDepartments] = useState([]);
@@ -135,9 +136,9 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   };
 
   const handleDocNumChange = (val) => {
-    const cleanVal = val.replace(/[^0-9]/g, "");
-    setNumeroDocumento(cleanVal);
-    checkDocumentAvailability(cleanVal, idTipoDocumento);
+    if (!/^[0-9]*$/.test(val)) return;
+    setNumeroDocumento(val);
+    checkDocumentAvailability(val, idTipoDocumento);
   };
 
   const checkEmailAvailability = (value) => {
@@ -170,19 +171,51 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const newErrors = {};
 
-    if (!nombre.trim()) { showToast("El nombre es obligatorio"); return; }
-    if (!razonSocial.trim()) { showToast("La Razón Social / Nombre Comercial es obligatorio"); return; }
-    if (!personaContacto.trim()) { showToast("La Persona de Contacto es obligatoria"); return; }
-    if (!numeroDocumento.trim()) { showToast("El número de documento es obligatorio"); return; }
-    if (documentStatus === "taken") { showToast(`El documento ya está registrado a nombre de ${documentOwner || "otro cliente"}.`); return; }
-    if (!idDepartamento) { showToast("El departamento es obligatorio"); return; }
-    if (!municipioId) { showToast("El municipio es obligatorio"); return; }
-    if (!telefono.trim()) { showToast("El teléfono de contacto es obligatorio"); return; }
-    if (!direccion.trim()) { showToast("La dirección es obligatoria"); return; }
-    if (password !== confirmPassword) { showToast("Las contraseñas no coinciden"); return; }
-    if (!passwordValid) { showToast("La contraseña no cumple los requisitos de seguridad"); return; }
-    if (emailStatus === "taken") { showToast("Este correo ya está registrado"); return; }
+    if (!nombre.trim()) {
+      newErrors.nombre = "El nombre de usuario es obligatorio";
+    } else if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]*$/.test(nombre)) {
+      newErrors.nombre = "El nombre de usuario solo puede contener letras, números y espacios";
+    }
+    if (!razonSocial.trim()) newErrors.razonSocial = "La Razón Social / Nombre Comercial es obligatorio";
+    if (!personaContacto.trim()) newErrors.personaContacto = "La Persona de Contacto es obligatoria";
+    
+    if (!numeroDocumento.trim()) {
+      newErrors.numeroDocumento = "El número de documento es obligatorio";
+    } else if (numeroDocumento.trim().length < 7) {
+      newErrors.numeroDocumento = "El documento debe tener al menos 7 dígitos";
+    }
+
+    if (documentStatus === "taken") newErrors.numeroDocumento = `El documento ya está registrado a nombre de ${documentOwner || "otro cliente"}.`;
+    if (!idDepartamento) newErrors.idDepartamento = "El departamento es obligatorio";
+    if (!municipioId) newErrors.municipioId = "El municipio es obligatorio";
+
+    if (!telefono.trim()) {
+      newErrors.telefono = "El teléfono de contacto es obligatorio";
+    } else if (telefono.trim().length !== 7 && telefono.trim().length !== 10) {
+      newErrors.telefono = "El teléfono debe tener 7 o 10 dígitos";
+    }
+
+    if (!direccion.trim()) newErrors.direccion = "La dirección es obligatoria";
+    if (!email.trim()) newErrors.email = "El correo electrónico es obligatorio";
+    if (emailStatus === "taken") newErrors.email = "Este correo ya está registrado";
+    
+    if (!password) {
+      newErrors.password = "La contraseña es obligatoria";
+    } else if (!passwordValid) {
+      newErrors.password = "La contraseña no cumple los requisitos de seguridad";
+    }
+
+    if (password !== confirmPassword) newErrors.confirmPassword = "Las contraseñas no coinciden";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      showToast("Por favor, corrige los errores en el formulario");
+      return;
+    }
+
+    setErrors({});
 
     setSubmitting(true);
     try {
@@ -278,7 +311,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
           <header className="mb-8 text-center">
             <div className="flex justify-center mb-4">
               <div className="relative p-1 rounded-xl bg-gray-50 border border-gray-100">
-                <img src="/public/imagen/logocuadrado.png" alt="Logo MSG" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(239,68,68,0.2)]" />
+                <img src="/imagen/logocuadrado.png" alt="Logo MSG" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(239,68,68,0.2)]" />
               </div>
             </div>
             <h2 className="text-[#343A40] text-xl font-bold tracking-tight">Crea tu cuenta</h2>
@@ -297,16 +330,25 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Razón Social / Nombre Comercial</label>
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                    <input type="text" value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} placeholder="Ej: Repuestos El Motor" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
+                    <input type="text" value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} maxLength={120} placeholder="Ej: Repuestos El Motor" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
                   </div>
+                  {errors.razonSocial && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.razonSocial}</p>}
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Persona de Contacto</label>
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                    <input type="text" value={personaContacto} onChange={(e) => setPersonaContacto(e.target.value)} placeholder="Ej: Juan Pérez" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
+                    <input
+                      type="text"
+                      value={personaContacto}
+                      onChange={(e) => { if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(e.target.value)) setPersonaContacto(e.target.value); }}
+                      maxLength={70}
+                      placeholder="Ej: Juan Pérez"
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
+                    />
                   </div>
+                  {errors.personaContacto && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.personaContacto}</p>}
                 </div>
               </div>
 
@@ -319,11 +361,13 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                     <input
                       type="text"
                       value={telefono}
-                      onChange={(e) => setTelefono(e.target.value.replace(/[^0-9]/g, ""))}
+                      onChange={(e) => { if (/^[0-9]*$/.test(e.target.value)) setTelefono(e.target.value); }}
+                      maxLength={15}
                       placeholder="Ej: 3001234567"
                       className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
                     />
                   </div>
+                  {errors.telefono && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.telefono}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -334,10 +378,12 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       type="text"
                       value={direccion}
                       onChange={(e) => setDireccion(e.target.value)}
+                      maxLength={150}
                       placeholder="Ej: Calle 50 #10-20"
                       className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
                     />
                   </div>
+                  {errors.direccion && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.direccion}</p>}
                 </div>
               </div>
 
@@ -380,9 +426,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       type="text"
                       value={numeroDocumento}
                       onChange={(e) => handleDocNumChange(e.target.value)}
+                      maxLength={15}
                       placeholder="Ej: 10203040"
                       className={`w-full pl-12 pr-10 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
-                        documentStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : documentStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
+                        documentStatus === "taken" || errors.numeroDocumento ? "border-red-600/50 focus:ring-red-600/10" : documentStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
                       }`}
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -391,7 +438,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       {documentStatus === "taken" && <XCircle className="h-4 w-4 text-red-500" />}
                     </span>
                   </div>
-                  {documentStatus === "taken" && <p className="text-[10px] text-red-500 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Documento registrado a nombre de {documentOwner || "otro cliente"}</p>}
+                  {errors.numeroDocumento && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.numeroDocumento}</p>}
+                  {documentStatus === "taken" && !errors.numeroDocumento && <p className="text-[10px] text-red-500 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Documento registrado a nombre de {documentOwner || "otro cliente"}</p>}
                   {documentStatus === "available" && <p className="text-[10px] text-emerald-500 mt-1 ml-1">Documento disponible</p>}
                 </div>
               </div>
@@ -418,6 +466,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       })}
                     </select>
                   </div>
+                  {errors.idDepartamento && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.idDepartamento}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -441,6 +490,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       })}
                     </select>
                   </div>
+                  {errors.municipioId && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.municipioId}</p>}
                 </div>
               </div>
             </div>
@@ -455,8 +505,16 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                   <label className="text-[10px] font-bold text-[#343A40] tracking-wider ml-1">Nombre de usuario</label>
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
-                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: juanperez12" className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm" />
+                    <input
+                      type="text"
+                      value={nombre}
+                      onChange={(e) => { if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]*$/.test(e.target.value)) setNombre(e.target.value); }}
+                      maxLength={30}
+                      placeholder="Ej: juanperez12"
+                      className="w-full pl-12 pr-4 py-3.5 bg-[#FFFFFF] border border-[#DEE2E6] rounded-xl outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/10 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm"
+                    />
                   </div>
+                  {errors.nombre && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.nombre}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -467,9 +525,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       type="email"
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); checkEmailAvailability(e.target.value); }}
+                      maxLength={100}
                       placeholder="tu@email.com"
                       className={`w-full pl-12 pr-10 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
-                        emailStatus === "taken" ? "border-red-600/50 focus:ring-red-600/10" : emailStatus === "inactive" ? "border-amber-500/50 focus:ring-amber-600/10" : emailStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
+                        emailStatus === "taken" || errors.email ? "border-red-600/50 focus:ring-red-600/10" : emailStatus === "inactive" ? "border-amber-500/50 focus:ring-amber-600/10" : emailStatus === "available" ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
                       }`}
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -479,7 +538,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       {emailStatus === "inactive" && <AlertCircle className="h-4 w-4 text-amber-500" />}
                     </span>
                   </div>
-                  {emailStatus === "taken" && <p className="text-[10px] text-red-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Este correo ya está registrado</p>}
+                  {errors.email && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.email}</p>}
+                  {emailStatus === "taken" && !errors.email && <p className="text-[10px] text-red-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Este correo ya está registrado</p>}
                   {emailStatus === "inactive" && <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1 ml-1"><AlertCircle size={10} /> Registrado pero sin activar. Regístrate para recibir otro enlace.</p>}
                   {emailStatus === "available" && <p className="text-[10px] text-emerald-400 mt-1 ml-1">Correo disponible</p>}
                 </div>
@@ -495,15 +555,17 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      maxLength={50}
                       placeholder="••••••••"
                       className={`w-full pl-12 pr-12 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
-                        password && !passwordValid ? "border-amber-500/50 focus:ring-amber-600/10" : passwordValid ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
+                        password && !passwordValid || errors.password ? "border-amber-500/50 focus:ring-amber-600/10" : passwordValid ? "border-emerald-500/50 focus:ring-emerald-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
                       }`}
                     />
                     <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500 transition-colors" tabIndex={-1}>
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+                  {errors.password && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.password}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -514,16 +576,18 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      maxLength={50}
                       placeholder="••••••••"
                       className={`w-full pl-12 pr-12 py-3.5 bg-[#FFFFFF] border rounded-xl outline-none focus:ring-4 text-[#343A40] placeholder-[#6C757D] shadow-sm transition-all text-sm ${
-                        confirmPassword && password !== confirmPassword ? "border-red-600/50 focus:ring-red-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
+                        confirmPassword && password !== confirmPassword || errors.confirmPassword ? "border-red-600/50 focus:ring-red-600/10" : "border-[#DEE2E6] focus:border-red-600/50 focus:ring-red-600/10"
                       }`}
                     />
                     <button type="button" onClick={() => setShowConfirmPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6C757D] hover:text-red-500 transition-colors" tabIndex={-1}>
                       {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  {confirmPassword && password !== confirmPassword && <p className="text-[10px] text-red-400 mt-1 ml-1">Las contraseñas no coinciden</p>}
+                  {errors.confirmPassword && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.confirmPassword}</p>}
+                  {confirmPassword && password !== confirmPassword && !errors.confirmPassword && <p className="text-[10px] text-red-400 mt-1 ml-1">Las contraseñas no coinciden</p>}
                 </div>
               </div>
 
