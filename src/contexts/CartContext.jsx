@@ -3,9 +3,52 @@ import { toast } from "sonner";
 
 const CartContext = createContext();
 
-const parsePrice = (priceStr) => {
-  if (typeof priceStr === "number") return priceStr;
-  return parseFloat(String(priceStr).replace(/[^0-9.]/g, "")) || 0;
+/**
+ * parsePrice — convierte CUALQUIER representación de precio a Number puro.
+ * Soporta:
+ *   - Número nativo:  15000        → 15000
+ *   - String entero: "15000"       → 15000
+ *   - Punto de miles: "15.000"     → 15000
+ *   - Coma decimal:  "15.000,50"   → 15000.50
+ *   - Moneda:        "$ 15.000"    → 15000
+ *   - Punto decimal: "15000.50"    → 15000.50
+ */
+const parsePrice = (price) => {
+  if (typeof price === "number" && !Number.isNaN(price)) return price;
+  const str = String(price ?? "").trim();
+  // Eliminar símbolos de moneda y espacios
+  const stripped = str.replace(/[^0-9.,]/g, "");
+  if (!stripped) return 0;
+
+  const hasComma = stripped.includes(",");
+  const hasDot   = stripped.includes(".");
+
+  if (hasComma && hasDot) {
+    // Formato europeo/colombiano: "15.000,50" → punto=miles, coma=decimal
+    const normalized = stripped.replace(/\./g, "").replace(",", ".");
+    return parseFloat(normalized) || 0;
+  }
+  if (hasComma && !hasDot) {
+    // Coma única: puede ser miles ("15,000") o decimal ("15,50")
+    // Si hay más de 3 dígitos tras la coma, es miles; si son 2, es decimal
+    const parts = stripped.split(",");
+    if (parts[1]?.length !== 2) {
+      // "15,000" → miles
+      return parseFloat(stripped.replace(/,/g, "")) || 0;
+    }
+    // "15,50" → decimal
+    return parseFloat(stripped.replace(",", ".")) || 0;
+  }
+  if (hasDot && !hasComma) {
+    const parts = stripped.split(".");
+    if (parts.length === 2 && parts[1].length === 3) {
+      // "15.000" → punto de miles, NO decimal
+      return parseFloat(stripped.replace(/\./g, "")) || 0;
+    }
+    // "15000.50" → punto decimal normal
+    return parseFloat(stripped) || 0;
+  }
+  return parseFloat(stripped) || 0;
 };
 
 const normalizeQuantity = (value) => {
@@ -16,7 +59,18 @@ const normalizeQuantity = (value) => {
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem("cart");
-    return savedCart ? JSON.parse(savedCart) : [];
+    if (savedCart) {
+      try {
+        const parsed = JSON.parse(savedCart);
+        // Garantizar que el estado inicial tenga precios estrictamente numéricos
+        return Array.isArray(parsed) 
+          ? parsed.map(item => ({ ...item, price: parsePrice(item.price) }))
+          : [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
   useEffect(() => {
@@ -39,7 +93,9 @@ export function CartProvider({ children }) {
             : item
         );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      // Mantener el estado con el precio estrictamente numérico
+      const numericPrice = parsePrice(product.price);
+      return [...prevCart, { ...product, price: numericPrice, quantity: 1 }];
     });
   };
 
@@ -68,8 +124,9 @@ export function CartProvider({ children }) {
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
+  // Almacenar el total calculado estrictamente sobre los valores numéricos
   const cartTotal = cart.reduce(
-    (acc, item) => acc + parsePrice(item.price) * item.quantity,
+    (acc, item) => acc + (typeof item.price === "number" ? item.price : parsePrice(item.price)) * item.quantity,
     0
   );
 

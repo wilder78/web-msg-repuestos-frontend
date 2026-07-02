@@ -29,9 +29,40 @@ const formatter = new Intl.NumberFormat("es-CO", {
   maximumFractionDigits: 0,
 });
 
-const parseCartPrice = (price) => {
-  const clean = String(price).replace(/[^0-9,.]/g, "");
-  return parseFloat(clean.replace(/[,.]/g, "")) || 0;
+/**
+ * toNumber — convierte CUALQUIER representación de precio a Number puro.
+ * Misma lógica que parsePrice en CartContext para garantizar consistencia.
+ * Únicamente se llama en la capa de cálculo; el resultado NUNCA se almacena
+ * formateado en el estado.
+ */
+const toNumber = (price) => {
+  if (typeof price === "number" && !Number.isNaN(price)) return price;
+  const str = String(price ?? "").trim();
+  const stripped = str.replace(/[^0-9.,]/g, "");
+  if (!stripped) return 0;
+
+  const hasComma = stripped.includes(",");
+  const hasDot   = stripped.includes(".");
+
+  if (hasComma && hasDot) {
+    // "15.000,50" → punto=miles, coma=decimal
+    return parseFloat(stripped.replace(/\./g, "").replace(",", ".")) || 0;
+  }
+  if (hasComma && !hasDot) {
+    const parts = stripped.split(",");
+    // "15,50" (2 decimales) → decimal | "15,000" → miles
+    return parts[1]?.length === 2
+      ? parseFloat(stripped.replace(",", ".")) || 0
+      : parseFloat(stripped.replace(/,/g, "")) || 0;
+  }
+  if (hasDot && !hasComma) {
+    const parts = stripped.split(".");
+    // "15.000" (3 decimales) → miles | "15000.50" → decimal
+    return parts.length === 2 && parts[1].length === 3
+      ? parseFloat(stripped.replace(/\./g, "")) || 0
+      : parseFloat(stripped) || 0;
+  }
+  return parseFloat(stripped) || 0;
 };
 
 const extractList = (payload) => {
@@ -153,8 +184,11 @@ const CartItem = ({ item }) => {
   const { updateQuantity, removeFromCart } = useCart();
   const [quantityValue, setQuantityValue] = useState(String(item.quantity || 1));
 
-  const unitPrice = parseCartPrice(item.price);
-  const subtotal = unitPrice * item.quantity;
+  // ─── Cálculo estrictamente numérico ──────────────────────────────
+  // toNumber() garantiza que item.price (sea string o number) sea un Number
+  // antes de cualquier operación aritmética. NUNCA se opera sobre el string.
+  const unitPrice = toNumber(item.price);
+  const subtotal  = unitPrice * (item.quantity ?? 1);
 
   useEffect(() => {
     setQuantityValue(String(item.quantity || 1));
@@ -226,7 +260,12 @@ const CartItem = ({ item }) => {
       {/* Info del producto */}
       <div className="flex-1 min-w-0">
         <p className="font-bold text-slate-900 text-base truncate">{item.name}</p>
-        <p className="text-sm text-slate-500 mt-0.5">Precio unitario: <span className="font-semibold text-blue-600">{item.price}</span></p>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Precio unitario:{" "}
+          <span className="font-semibold text-blue-600">
+            {formatter.format(toNumber(item.price))}
+          </span>
+        </p>
         {item.discount && (
           <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
             <Tag className="w-3 h-3" />{item.discount}
@@ -998,7 +1037,7 @@ export default function CartPage() {
     const sellerId = options.sellerId ?? null;
     const detalles = cart.map((item) => {
       const cantidad = Number.parseInt(item.quantity, 10) || 1;
-      const precioUnitario = parseCartPrice(item.price);
+      const precioUnitario = typeof item.price === "number" ? item.price : 0;
       return {
         id_producto: item.id,
         idProducto: item.id,
