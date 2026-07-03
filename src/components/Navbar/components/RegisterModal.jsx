@@ -215,7 +215,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
     if (!nombre.trim()) {
       newErrors.nombre = "El nombre de usuario es obligatorio";
-    } else if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]*$/.test(nombre)) {
+    } else if (!/^[a-zA-Z0-9 ]*$/.test(nombre)) {
       newErrors.nombre = "El nombre de usuario solo puede contener letras, números y espacios";
     }
     if (!razonSocial.trim()) {
@@ -677,7 +677,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                       onFocus={() => markTouched("nombre")}
                       onChange={(e) => {
                         const val = e.target.value;
-                        if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]*$/.test(val)) {
+                        if (/^[a-zA-Z0-9 ]*$/.test(val)) {
                           setNombre(val);
                           markTouched("nombre");
                           if (val.trim()) {

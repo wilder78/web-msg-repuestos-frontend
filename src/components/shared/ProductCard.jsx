@@ -49,17 +49,35 @@ export default function ProductCard({ product, showNew = false }) {
 
   return (
     <div className="group relative bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:-translate-y-[5px] hover:border-orange-200/50 hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-300 ease-in-out flex flex-col h-full">
-      {(product.esNuevo || product.es_nuevo) && (
-        <span className="absolute top-3 left-3 z-10 rounded-lg bg-gradient-to-r from-orange-600 via-red-500 to-amber-500 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-orange-500/20 animate-pulse">
-          Nuevo
-        </span>
-      )}
+      {/* Zona de Badges: Fila superior horizontal con padding-top generoso */}
+      <div className="absolute top-0 w-full flex justify-between items-start px-4 pt-5 z-20 pointer-events-none">
+        {/* Izquierda: Badge de Stock o Nuevo */}
+        {stock > 0 ? (
+          <span className="rounded-md bg-emerald-500/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+            En Stock
+          </span>
+        ) : (
+          <span className="rounded-md bg-red-500/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+            Agotado
+          </span>
+        )}
+
+        {/* Derecha: Badge de Calificación (Mock) */}
+        <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-md shadow-sm border border-slate-100">
+          <svg className="w-3 h-3 text-amber-400 fill-amber-400" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+          <span className="text-[10px] font-bold text-slate-700">4.8</span>
+          <span className="text-[9px] text-slate-400 ml-0.5">(+1k)</span>
+        </div>
+      </div>
       
-      <div className="relative h-48 overflow-hidden bg-white flex items-center justify-center p-4">
+      {/* Contenedor de la Imagen: Desplazado hacia abajo, centrado y re-escalado */}
+      <div className="relative h-56 bg-slate-50 flex items-center justify-center px-4 pt-16 pb-3">
         <img
           src={image}
           alt={name}
-          className="h-full max-h-full w-auto max-w-full object-contain group-hover:scale-105 transition-transform duration-500"
+          className="h-full w-[85%] object-contain object-center mx-auto group-hover:scale-105 transition-transform duration-500"
         />
         {stock <= 0 && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
@@ -71,18 +89,19 @@ export default function ProductCard({ product, showNew = false }) {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      <div className="p-5 flex flex-col flex-1">
+      {/* Bloque de Información Inferior: Centrado y espaciado ajustado */}
+      <div className="p-5 flex flex-col flex-1 items-center text-center">
         {product.marca && (
-          <p className="text-xs font-semibold text-orange-600 mb-1 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-orange-600 mb-1.5 uppercase tracking-wider">
             {product.marca}
           </p>
         )}
-        <h3 className="font-semibold text-slate-800 text-base mb-2 h-12 line-clamp-2 overflow-hidden group-hover:text-orange-600 transition-colors" title={name}>
+        <h3 className="font-semibold text-slate-800 text-base mb-4 h-12 line-clamp-2 overflow-hidden group-hover:text-orange-600 transition-colors w-full" title={name}>
           {name}
         </h3>
-        <div className="mt-auto pt-4">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg font-bold text-slate-900">{price}</span>
+        <div className="mt-auto pt-3 w-full flex flex-col items-center">
+          <div className="flex items-center justify-center gap-2 mb-5 w-full">
+            <span className="text-xl font-black text-slate-900">{price}</span>
           </div>
           <button
             onClick={handleAdd}
