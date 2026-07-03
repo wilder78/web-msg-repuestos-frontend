@@ -366,7 +366,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             <p className="text-[#6C757D] text-sm mt-1 px-2">Únete a la comunidad líder en repuestos y accesorios</p>
           </header>
 
-          <form className="bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6] flex flex-col gap-5" onSubmit={handleSubmit}>
+          <form className="bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6] flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
 
             {/* --- DATOS DE FACTURACIÓN (Cliente) --- */}
             <div className="space-y-4">
@@ -709,9 +709,6 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6C757D] group-focus-within:text-red-500 transition-colors" size={18} />
                     <input
                       type="email"
-                      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                      title="Por favor, ingresa un correo electrónico válido (ej: usuario@dominio.com)"
-                      required
                       value={email}
                       onChange={(e) => {
                         const val = e.target.value.trim();
@@ -727,6 +724,12 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
                         } else if (val) {
                           // Mostrar error dinámico de estructura si el usuario ya tocó o está intentando validar
                           setErrors((prev) => ({ ...prev, email: "Por favor, ingresa un correo electrónico válido (ej: usuario@dominio.com)" }));
+                        } else {
+                          setErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.email;
+                            return next;
+                          });
                         }
                       }}
                       maxLength={100}
