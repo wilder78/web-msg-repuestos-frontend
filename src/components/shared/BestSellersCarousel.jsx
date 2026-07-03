@@ -4,6 +4,7 @@ import { ChevronRight, Star, ShoppingCart, ShieldCheck, Loader2 } from "lucide-r
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../hooks/useAuth";
 import CardCarousel from "./CardCarousel";
+import ProductCard from "./ProductCard";
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
@@ -88,100 +89,7 @@ export default function BestSellersCarousel({ products = [] }) {
         tabletViews={2.5}
         mobileViews={1.25}
         autoplay={4000}
-        renderItem={(p) => {
-          // Calcular precio
-          let priceValue = Number(p.precio_publico || p.precioPublico || 0);
-          if (Number(user?.idRol) === 4 && user?.tipoCliente) {
-            const tipo = p.tipoCliente?.toLowerCase() || user.tipoCliente.toLowerCase();
-            const minoristaPrice = Number(p.precio_minorista || p.precioMinorista || 0);
-            const mayoristaPrice = Number(p.precio_mayorista || p.precioMayorista || 0);
-            if (tipo === "minorista" && minoristaPrice > 0) priceValue = minoristaPrice;
-            else if (tipo === "mayorista" && mayoristaPrice > 0) priceValue = mayoristaPrice;
-          }
-          const formattedPrice = formatter.format(priceValue);
-
-          const rawName = p.nombre || p.name || "Repuesto";
-          const cleanName = rawName.replace(/\s*\(.*?\)/g, "").replace(/\s*\[.*?\]/g, "").trim();
-
-          const cartItem = {
-            id: p.idProducto || p.id_producto,
-            name: cleanName,
-            price: formattedPrice,
-            image: p.imagen_url || "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=500&auto=format&fit=crop&q=60",
-            stock: Number(p.stock ?? 0),
-          };
-
-          const isLowStock = p.stock > 0 && p.stock <= 5;
-
-          return (
-            <div className="group relative bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:-translate-y-[5px] hover:border-orange-200/50 hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-300 ease-in-out flex flex-col h-[400px]">
-              
-              {/* Badge de Stock Urgencia */}
-              <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-                {isLowStock ? (
-                  <span className="rounded-lg bg-red-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md animate-pulse">
-                    ¡Pocas Unidades!
-                  </span>
-                ) : (
-                  <span className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
-                    En Stock
-                  </span>
-                )}
-              </div>
-
-              {/* Badge de Rating Social Proof */}
-              <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-lg bg-slate-900/80 backdrop-blur-sm px-2 py-1 text-[10px] font-bold text-white shadow-md">
-                <Star size={10} className="fill-amber-400 stroke-amber-400" />
-                <span>{p.rating}</span>
-                <span className="text-slate-400">|</span>
-                <span className="text-slate-300">+{p.ventas} vendidos</span>
-              </div>
-
-              {/* Imagen de Repuesto */}
-              <div className="relative h-44 overflow-hidden bg-white flex items-center justify-center p-4">
-                <img
-                  src={p.imagen_url || "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=500&auto=format&fit=crop&q=60"}
-                  alt={cleanName}
-                  className="h-full max-h-full w-auto max-w-full object-contain group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-
-              {/* Contenido Card Body */}
-              <div className="p-5 flex flex-col flex-1">
-                {/* Título de repuesto */}
-                <h3 className="font-semibold text-slate-800 text-base mb-1 h-12 line-clamp-2 overflow-hidden group-hover:text-orange-600 transition-colors" title={cleanName}>
-                  {cleanName}
-                </h3>
-
-                {/* Compatibilidad (UX) */}
-                <p className="text-xs text-slate-500 mb-2 truncate" title={p.compatibilidad}>
-                  <span className="font-medium text-slate-600">Compatibilidad:</span> {p.compatibilidad}
-                </p>
-
-                {/* Garantía */}
-                <div className="flex items-center gap-1 text-[11px] text-emerald-600 mb-4">
-                  <ShieldCheck size={12} />
-                  <span>Garantizado</span>
-                </div>
-
-                {/* Compra / Acción (mt-auto) */}
-                <div className="mt-auto pt-2 border-t border-slate-100">
-                  <div className="flex items-center gap-2 mb-3 mt-2">
-                    <span className="text-lg font-bold text-slate-900">{formattedPrice}</span>
-                  </div>
-                  <button
-                    onClick={() => addToCart(cartItem)}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 font-medium text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-orange-600 hover:to-red-500 hover:shadow-lg hover:shadow-orange-500/25 active:scale-95"
-                  >
-                    <ShoppingCart size={18} />
-                    Agregar al Carrito
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        }}
+        renderItem={(p) => <ProductCard product={p} variant="detailed" />}
       />
     </section>
   );
