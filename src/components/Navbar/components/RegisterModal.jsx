@@ -21,6 +21,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   const [emailStatus, setEmailStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const emailTimer = useRef(null);
+  const formRef = useRef(null);
 
   const [toast, setToast] = useState({
     visible: false,
@@ -39,6 +40,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
   const [personaContacto, setPersonaContacto] = useState("");
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
   // Marca un campo como tocado
   const markTouched = (field) =>
@@ -223,6 +225,9 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
     } else if (razonSocial.length > 50) {
       newErrors.razonSocial = "Máximo 50 caracteres permitidos";
     }
+    if (!aceptaTerminos) {
+      newErrors.terminos = "Debe aceptar los términos y condiciones para registrarse";
+    }
     if (!personaContacto.trim()) newErrors.personaContacto = "La Persona de Contacto es obligatoria";
     
     if (!numeroDocumento.trim()) {
@@ -257,9 +262,31 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
 
     if (password !== confirmPassword) newErrors.confirmPassword = "Las contraseñas no coinciden";
 
+    // Marcar TODOS los campos como tocados para que los mensajes sean visibles
+    setTouched({
+      razonSocial: true,
+      personaContacto: true,
+      telefono: true,
+      direccion: true,
+      idDepartamento: true,
+      municipioId: true,
+      nombre: true,
+      confirmPassword: true,
+      numeroDocumento: true,
+      email: true,
+      password: true,
+    });
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      showToast("Por favor, corrige los errores en el formulario");
+      // Scroll automático al primer input con error
+      setTimeout(() => {
+        const firstError = formRef.current?.querySelector(".border-red-500\\/60");
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 60);
+      showToast("Por favor, completa todos los campos requeridos");
       return;
     }
 
@@ -366,7 +393,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             <p className="text-[#6C757D] text-sm mt-1 px-2">Únete a la comunidad líder en repuestos y accesorios</p>
           </header>
 
-          <form className="bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6] flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
+          <form ref={formRef} className="bg-[#F8F9FA] p-6 rounded-2xl border border-[#DEE2E6] flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
 
             {/* --- DATOS DE FACTURACIÓN (Cliente) --- */}
             <div className="space-y-4">
@@ -844,18 +871,37 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             </div>
 
             {/* Términos */}
-            <div className="flex items-start gap-3 px-1 py-1">
-              <input type="checkbox" required className="mt-1 w-4 h-4 rounded border-[#DEE2E6] bg-[#FFFFFF] text-red-600 focus:ring-red-500/50 cursor-pointer" />
-              <p className="text-[10px] text-[#343A40] leading-tight">
-                Acepto los <span className="text-red-600 cursor-pointer hover:text-red-500 transition-colors font-bold">Términos de servicio</span> y la{" "}
-                <span className="text-red-600 cursor-pointer hover:text-red-500 transition-colors font-bold">Política de privacidad</span>.
-              </p>
+            <div className="space-y-1.5 px-1 py-1">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="terminos"
+                  checked={aceptaTerminos}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setAceptaTerminos(checked);
+                    if (checked) {
+                      setErrors((prev) => { const next = { ...prev }; delete next.terminos; return next; });
+                    } else {
+                      setErrors((prev) => ({ ...prev, terminos: "Debe aceptar los términos y condiciones para registrarse" }));
+                    }
+                  }}
+                  className="mt-1 w-4 h-4 rounded border-[#DEE2E6] bg-[#FFFFFF] text-red-600 focus:ring-red-500/50 cursor-pointer"
+                />
+                <label htmlFor="terminos" className="text-[10px] text-[#343A40] leading-tight cursor-pointer">
+                  Acepto los <span className="text-red-600 hover:text-red-500 transition-colors font-bold">Términos de servicio</span> y la{" "}
+                  <span className="text-red-600 hover:text-red-500 transition-colors font-bold">Política de privacidad</span>.
+                </label>
+              </div>
+              {errors.terminos && (
+                <p aria-live="polite" className="text-[10px] text-red-500 ml-1">{errors.terminos}</p>
+              )}
             </div>
 
             {/* Botón */}
             <button
               type="submit"
-              disabled={submitting || emailStatus === "taken" || (email.length > 0 && !EMAIL_REGEX.test(email))}
+              disabled={submitting || emailStatus === "taken"}
               className={`w-full rounded-xl font-black uppercase tracking-widest py-4 flex items-center justify-center gap-3 transition-all active:scale-95 cursor-pointer ${
                 submitting ? "bg-gray-400 text-gray-200 cursor-not-allowed" : "btn-nitro bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white shadow-[0_10px_20px_rgba(220,38,38,0.2)]"
               }`}
